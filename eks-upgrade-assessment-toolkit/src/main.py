@@ -883,7 +883,7 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
             pluto_results = analysis.get('pluto_results', {})
             cluster_metadata = analysis.get('cluster_metadata', {})
             
-            # Create simplified assessment data for web UI
+            # Create simplified assessment data for web UI (no cluster metadata duplication)
             assessment_data[cluster_name] = {
                 'cluster_info': {
                     'name': cluster_name,
@@ -910,8 +910,8 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
                             'apis': pluto_results.get('deprecated_apis', [])[:10]  # Limit for web UI
                         }
                     }
-                },
-                'cluster_metadata': cluster_metadata  # Include full metadata for detailed view
+                }
+                # Removed cluster_metadata to avoid duplication with clusters-metadata.json
             }
         
         # Step 2: Save assessment data JSON for web UI
@@ -1645,17 +1645,19 @@ def generate_html_report(clusters_data: dict, output_dir: str):
             else:
                 karpenter_status = "❌ Not Installed"
             
-            # AWS Plugins info
-            aws_plugins = cluster_data.get('aws_plugins', {})
+            # AWS Plugins info - derive from addons to avoid duplication
+            addons = cluster_data.get('addons', [])
             plugin_list = []
-            if aws_plugins.get('load_balancer_controller'):
-                plugin_list.append('ALB')
-            if aws_plugins.get('cluster_autoscaler'):
-                plugin_list.append('CA')
-            if aws_plugins.get('ebs_csi_driver'):
-                plugin_list.append('EBS')
-            if aws_plugins.get('efs_csi_driver'):
-                plugin_list.append('EFS')
+            for addon in addons:
+                addon_name = addon.get('name', '')
+                if 'load-balancer-controller' in addon_name or 'alb' in addon_name.lower():
+                    plugin_list.append('ALB')
+                elif 'cluster-autoscaler' in addon_name:
+                    plugin_list.append('CA')
+                elif 'ebs-csi' in addon_name:
+                    plugin_list.append('EBS')
+                elif 'efs-csi' in addon_name:
+                    plugin_list.append('EFS')
             
             plugins_display = ', '.join(plugin_list) if plugin_list else "Core only"
             
@@ -1816,21 +1818,24 @@ def generate_html_report(clusters_data: dict, output_dir: str):
                                 </div>
 """
             
-            # AWS Plugins Details
+            # AWS Plugins Details - derive from addons
             html_content += """
                                 <div class="details-section">
-                                    <h4>AWS Plugins</h4>
+                                    <h4>AWS Plugins (from EKS Addons)</h4>
                                     <ul class="resource-list">
 """
             
-            plugins_info = [
-                ('AWS Load Balancer Controller', aws_plugins.get('load_balancer_controller', False)),
-                ('Cluster Autoscaler', aws_plugins.get('cluster_autoscaler', False)),
-                ('EBS CSI Driver', aws_plugins.get('ebs_csi_driver', False)),
-                ('EFS CSI Driver', aws_plugins.get('efs_csi_driver', False))
+            # Derive plugin info from addons
+            addons = cluster_data.get('addons', [])
+            plugin_checks = [
+                ('AWS Load Balancer Controller', 'load-balancer-controller'),
+                ('Cluster Autoscaler', 'cluster-autoscaler'),
+                ('EBS CSI Driver', 'ebs-csi'),
+                ('EFS CSI Driver', 'efs-csi')
             ]
             
-            for plugin_name, installed in plugins_info:
+            for plugin_name, addon_pattern in plugin_checks:
+                installed = any(addon_pattern in addon.get('name', '') for addon in addons)
                 status_badge = '<span class="badge badge-success">Installed</span>' if installed else '<span class="badge badge-warning">Not Installed</span>'
                 html_content += f"""
                                         <li class="resource-item">
@@ -1839,12 +1844,13 @@ def generate_html_report(clusters_data: dict, output_dir: str):
                                         </li>
 """
             
-            # Core addon versions
-            if aws_plugins.get('vpc_cni_version'):
+            # Core addon versions - get VPC CNI from addons
+            vpc_cni_addon = next((addon for addon in addons if 'vpc-cni' in addon.get('name', '')), None)
+            if vpc_cni_addon:
                 html_content += f"""
                                         <li class="resource-item">
                                             <div><strong>VPC CNI Version</strong></div>
-                                            <div>{aws_plugins.get('vpc_cni_version')}</div>
+                                            <div>{vpc_cni_addon.get('version', 'N/A')}</div>
                                         </li>
 """
             
@@ -3042,8 +3048,8 @@ if __name__ == '__main__':
                     'node_groups': len(cluster_metadata.get('node_groups', [])),
                     'fargate_profiles': len(cluster_metadata.get('fargate_profiles', [])),
                     'addons': len(cluster_metadata.get('addons', [])),
-                    'karpenter_installed': cluster_metadata.get('karpenter', {}).get('installed', False),
-                    'aws_plugins': len(cluster_metadata.get('aws_plugins', {}).get('installed_plugins', []))
+                    'karpenter_installed': cluster_metadata.get('karpenter', {}).get('installed', False)
+                    # Removed aws_plugins - plugin information is available in addons
                 }
             }
         

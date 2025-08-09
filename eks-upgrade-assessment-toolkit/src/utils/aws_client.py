@@ -277,13 +277,8 @@ class AWSClient:
                 'installed': False,
                 'node_pools_count': 0,
                 'provisioners_count': 0
-            },
-            'aws_plugins': {
-                'load_balancer_controller': False,
-                'cluster_autoscaler': False,
-                'ebs_csi_driver': False,
-                'efs_csi_driver': False
             }
+            # Removed aws_plugins - plugin information is available in addons section
         }
         
         # Create cluster-specific directory structure for original data
@@ -430,13 +425,7 @@ class AWSClient:
             except Exception as e:
                 print(f"    ⚠️  Error collecting Karpenter info: {str(e)}")
             
-            print(f"    📊 Collecting AWS plugins info...")
-            # Get AWS plugin information - upgrade-focused info only
-            try:
-                aws_plugins = self._get_aws_plugins_info_lightweight(cluster_name)
-                metadata['aws_plugins'] = aws_plugins
-            except Exception as e:
-                print(f"    ⚠️  Error collecting AWS plugins: {str(e)}")
+            # AWS plugins info is now available in the addons section - no separate collection needed
             
         except Exception as e:
             print(f"Error collecting metadata for {cluster_name}: {str(e)}")

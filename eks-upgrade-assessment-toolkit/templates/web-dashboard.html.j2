@@ -428,6 +428,24 @@
                 const addonsCount = cluster.addons ? cluster.addons.length : 0;
                 const karpenterStatus = cluster.karpenter && cluster.karpenter.installed ? 
                     `✅ ${cluster.karpenter.node_pools_count || 0} pools` : '❌ Not installed';
+                
+                // Derive plugin info from addons
+                const pluginList = [];
+                if (cluster.addons) {
+                    cluster.addons.forEach(addon => {
+                        const name = addon.name || '';
+                        if (name.includes('load-balancer-controller') || name.toLowerCase().includes('alb')) {
+                            pluginList.push('ALB');
+                        } else if (name.includes('cluster-autoscaler')) {
+                            pluginList.push('CA');
+                        } else if (name.includes('ebs-csi')) {
+                            pluginList.push('EBS');
+                        } else if (name.includes('efs-csi')) {
+                            pluginList.push('EFS');
+                        }
+                    });
+                }
+                const pluginsStatus = pluginList.length > 0 ? pluginList.join(', ') : 'Core only';
 
                 row.innerHTML = `
                     <td>
