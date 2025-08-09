@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EKS Upgrade Assessment Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #232f3e 0%, #131a22 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #007dbc;
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #232f3e;
+        }
+
+        .summary-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .clusters-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #232f3e;
+            color: white;
+            padding: 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .clusters-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .clusters-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #232f3e;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .cluster-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .cluster-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .cluster-row.expanded {
+            background-color: #e3f2fd;
+        }
+
+        .cluster-row td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .cluster-details {
+            display: none;
+            background: #f8f9fa;
+            border-top: 2px solid #007dbc;
+        }
+
+        .cluster-details.show {
+            display: table-row;
+        }
+
+        .details-content {
+            padding: 2rem;
+        }
+
+        .details-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            color: #007dbc;
+            border-bottom-color: #007dbc;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .detail-table th {
+            background: #232f3e;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .detail-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s ease;
+            margin-right: 0.5rem;
+        }
+
+        .cluster-row.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid #007dbc;
+        }
+
+        .info-item strong {
+            display: block;
+            color: #232f3e;
+            margin-bottom: 0.25rem;
+        }
+
+        .close-details {
+            float: right;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .close-details:hover {
+            background: #c82333;
+        }
+
+        .generation-info {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: #0c5460;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .clusters-table {
+                font-size: 0.9rem;
+            }
+            
+            .details-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 EKS Upgrade Assessment Dashboard</h1>
+        <p>Interactive analysis of your EKS clusters for upgrade readiness</p>
+    </div>
+
+    <div class="container">
+        <div class="generation-info">
+            <strong>Assessment Generated:</strong> {{ generation_time }}
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3 id="total-clusters">0</h3>
+                <p>Total Clusters</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="ready-clusters">0</h3>
+                <p>Ready for Upgrade</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="warning-clusters">0</h3>
+                <p>Need Attention</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="total-node-groups">0</h3>
+                <p>Total Node Groups</p>
+            </div>
+        </div>
+
+        <!-- Clusters Table -->
+        <div class="clusters-section">
+            <div class="section-header">
+                EKS Clusters Overview
+            </div>
+            <table class="clusters-table">
+                <thead>
+                    <tr>
+                        <th>Cluster Name</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Node Groups</th>
+                        <th>Addons</th>
+                        <th>Karpenter</th>
+                        <th>Created</th>
+                        <th>Platform Version</th>
+                    </tr>
+                </thead>
+                <tbody id="clusters-tbody">
+                    <!-- Cluster rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Embedded Data -->
+    <script>
+        // Embedded clusters metadata - no need for fetch()
+        const clustersData = {{ clusters_metadata | tojson }};
+        
+        // Embedded assessment data - no need for fetch()
+        const assessmentData = {{ assessment_data | tojson }};
+        
+        let expandedCluster = null;
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded with', Object.keys(clustersData).length, 'clusters');
+            populateDashboard();
+        });
+
+        function populateDashboard() {
+            updateSummaryCards();
+            populateClustersTable();
+        }
+
+        function updateSummaryCards() {
+            const clusters = Object.keys(clustersData);
+            const totalClusters = clusters.length;
+            let readyClusters = 0;
+            let warningClusters = 0;
+            let totalNodeGroups = 0;
+
+            clusters.forEach(clusterName => {
+                const cluster = clustersData[clusterName];
+                
+                // Count node groups
+                if (cluster.node_groups) {
+                    totalNodeGroups += cluster.node_groups.length;
+                }
+
+                // Determine cluster status (simplified logic)
+                if (cluster.cluster_status === 'ACTIVE') {
+                    readyClusters++;
+                } else {
+                    warningClusters++;
+                }
+            });
+
+            document.getElementById('total-clusters').textContent = totalClusters;
+            document.getElementById('ready-clusters').textContent = readyClusters;
+            document.getElementById('warning-clusters').textContent = warningClusters;
+            document.getElementById('total-node-groups').textContent = totalNodeGroups;
+        }
+
+        function populateClustersTable() {
+            const tbody = document.getElementById('clusters-tbody');
+            tbody.innerHTML = '';
+
+            Object.keys(clustersData).forEach(clusterName => {
+                const cluster = clustersData[clusterName];
+                
+                // Create main cluster row
+                const row = document.createElement('tr');
+                row.className = 'cluster-row';
+                row.setAttribute('data-cluster', clusterName);
+                
+                const createdDate = cluster.created_at ? 
+                    new Date(cluster.created_at).toLocaleDateString() : 'N/A';
+                
+                const nodeGroupsCount = cluster.node_groups ? cluster.node_groups.length : 0;
+                const addonsCount = cluster.addons ? cluster.addons.length : 0;
+                const karpenterStatus = cluster.karpenter && cluster.karpenter.installed ? 
+                    `✅ ${cluster.karpenter.node_pools_count || 0} pools` : '❌ Not installed';
+
+                row.innerHTML = `
+                    <td>
+                        <span class="expand-icon">▶</span>
+                        <strong>${clusterName}</strong>
+                    </td>
+                    <td>${cluster.cluster_version || 'N/A'}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(cluster.cluster_status)}">
+                            ${cluster.cluster_status || 'Unknown'}
+                        </span>
+                    </td>
+                    <td>${nodeGroupsCount}</td>
+                    <td>${addonsCount}</td>
+                    <td>${karpenterStatus}</td>
+                    <td>${createdDate}</td>
+                    <td>${cluster.platform_version || 'N/A'}</td>
+                `;
+
+                row.addEventListener('click', () => toggleClusterDetails(clusterName, row));
+                tbody.appendChild(row);
+
+                // Create details row (initially hidden)
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = 'cluster-details';
+                detailsRow.setAttribute('data-cluster-details', clusterName);
+                detailsRow.innerHTML = `
+                    <td colspan="8">
+                        <div class="details-content">
+                            <button class="close-details" onclick="closeClusterDetails('${clusterName}')">
+                                ✕ Close Details
+                            </button>
+                            <h3>Cluster Details: ${clusterName}</h3>
+                            ${generateClusterDetailsContent(cluster)}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(detailsRow);
+            });
+        }
+
+        function generateClusterDetailsContent(cluster) {
+            return `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Cluster Version</strong>
+                        ${cluster.cluster_version || 'N/A'}
+                    </div>
+                    <div class="info-item">
+                        <strong>Platform Version</strong>
+                        ${cluster.platform_version || 'N/A'}
+                    </div>
+                    <div class="info-item">
+                        <strong>Status</strong>
+                        <span class="status-badge ${getStatusClass(cluster.cluster_status)}">
+                            ${cluster.cluster_status || 'Unknown'}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Created</strong>
+                        ${cluster.created_at ? new Date(cluster.created_at).toLocaleString() : 'N/A'}
+                    </div>
+                </div>
+
+                <div class="details-tabs">
+                    <button class="tab-button active" onclick="showTab('${cluster.cluster_name}', 'nodegroups')">
+                        Node Groups (${cluster.node_groups ? cluster.node_groups.length : 0})
+                    </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'addons')">
+                        EKS Addons (${cluster.addons ? cluster.addons.length : 0})
+                    </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'karpenter')">
+                        Karpenter
+                    </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'fargate')">
+                        Fargate (${cluster.fargate_profiles ? cluster.fargate_profiles.length : 0})
+                    </button>
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-nodegroups" class="tab-content active">
+                    ${generateNodeGroupsTable(cluster.node_groups)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-addons" class="tab-content">
+                    ${generateAddonsTable(cluster.addons)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-karpenter" class="tab-content">
+                    ${generateKarpenterInfo(cluster.karpenter)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-fargate" class="tab-content">
+                    ${generateFargateTable(cluster.fargate_profiles)}
+                </div>
+            `;
+        }
+
+        function generateNodeGroupsTable(nodeGroups) {
+            if (!nodeGroups || nodeGroups.length === 0) {
+                return '<div class="no-data">No managed node groups found</div>';
+            }
+
+            let html = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Version</th>
+                            <th>Capacity Type</th>
+                            <th>Instance Types</th>
+                            <th>AMI Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            nodeGroups.forEach(ng => {
+                const instanceTypes = ng.instance_types ? ng.instance_types.join(', ') : 'N/A';
+                html += `
+                    <tr>
+                        <td><strong>${ng.name}</strong></td>
+                        <td>
+                            <span class="status-badge ${getStatusClass(ng.status)}">
+                                ${ng.status}
+                            </span>
+                        </td>
+                        <td>${ng.version || 'N/A'}</td>
+                        <td>${ng.capacity_type || 'N/A'}</td>
+                        <td>${instanceTypes}</td>
+                        <td>${ng.ami_type || 'N/A'}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function generateAddonsTable(addons) {
+            if (!addons || addons.length === 0) {
+                return '<div class="no-data">No EKS addons found</div>';
+            }
+
+            let html = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            addons.forEach(addon => {
+                const addonType = ['vpc-cni', 'coredns', 'kube-proxy'].includes(addon.name) ? 'Core' : 'Additional';
+                html += `
+                    <tr>
+                        <td><strong>${addon.name}</strong></td>
+                        <td>${addon.version || 'N/A'}</td>
+                        <td>
+                            <span class="status-badge ${getStatusClass(addon.status)}">
+                                ${addon.status}
+                            </span>
+                        </td>
+                        <td>${addonType}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function generateKarpenterInfo(karpenter) {
+            if (!karpenter) {
+                return '<div class="no-data">Karpenter information not available</div>';
+            }
+
+            const installed = karpenter.installed ? '✅ Installed' : '❌ Not Installed';
+            const version = karpenter.version || 'N/A';
+            const nodePools = karpenter.node_pools_count || 0;
+            const provisioners = karpenter.provisioners_count || 0;
+
+            return `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Installation Status</strong>
+                        ${installed}
+                    </div>
+                    <div class="info-item">
+                        <strong>Version</strong>
+                        ${version}
+                    </div>
+                    <div class="info-item">
+                        <strong>Node Pools</strong>
+                        ${nodePools}
+                    </div>
+                    <div class="info-item">
+                        <strong>Provisioners (Legacy)</strong>
+                        ${provisioners}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateFargateTable(fargateProfiles) {
+            if (!fargateProfiles || fargateProfiles.length === 0) {
+                return '<div class="no-data">No Fargate profiles found</div>';
+            }
+
+            let html = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            fargateProfiles.forEach(profile => {
+                html += `
+                    <tr>
+                        <td><strong>${profile.name}</strong></td>
+                        <td>
+                            <span class="status-badge ${getStatusClass(profile.status)}">
+                                ${profile.status}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function toggleClusterDetails(clusterName, row) {
+            const detailsRow = document.querySelector(`[data-cluster-details="${clusterName}"]`);
+            
+            // Close any currently expanded cluster
+            if (expandedCluster && expandedCluster !== clusterName) {
+                closeClusterDetails(expandedCluster);
+            }
+
+            if (detailsRow.classList.contains('show')) {
+                // Close this cluster
+                closeClusterDetails(clusterName);
+            } else {
+                // Open this cluster
+                row.classList.add('expanded');
+                detailsRow.classList.add('show');
+                expandedCluster = clusterName;
+            }
+        }
+
+        function closeClusterDetails(clusterName) {
+            const row = document.querySelector(`[data-cluster="${clusterName}"]`);
+            const detailsRow = document.querySelector(`[data-cluster-details="${clusterName}"]`);
+            
+            if (row) row.classList.remove('expanded');
+            if (detailsRow) detailsRow.classList.remove('show');
+            
+            if (expandedCluster === clusterName) {
+                expandedCluster = null;
+            }
+        }
+
+        function showTab(clusterName, tabName) {
+            // Hide all tab contents for this cluster
+            const tabContents = document.querySelectorAll(`[id^="tab-${clusterName}-"]`);
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all tab buttons for this cluster
+            const tabButtons = document.querySelectorAll(`[onclick*="${clusterName}"]`);
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab content
+            const selectedTab = document.getElementById(`tab-${clusterName}-${tabName}`);
+            if (selectedTab) selectedTab.classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function getStatusClass(status) {
+            if (!status) return '';
+            
+            const statusLower = status.toLowerCase();
+            if (statusLower === 'active' || statusLower === 'ready') return 'status-active';
+            if (statusLower.includes('warning') || statusLower.includes('updating')) return 'status-warning';
+            if (statusLower.includes('error') || statusLower.includes('failed')) return 'status-error';
+            return 'status-active';
+        }
+    </script>
+</body>
+</html>

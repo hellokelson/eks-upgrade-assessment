@@ -1,0 +1,136 @@
+# EKS Upgrade Assessment Report
+
+**Generated:** {{ generation_time | timestamp }}
+
+## Executive Summary
+
+- **Total Clusters:** {{ summary.total_clusters }}
+- **Clusters Ready:** {{ summary.clusters_ready }}
+- **Clusters with Issues:** {{ summary.clusters_with_issues }}
+- **Critical Issues:** {{ summary.critical_issues }}
+- **Warnings:** {{ summary.warnings }}
+- **Deprecated APIs Found:** {{ summary.deprecated_apis_found }}
+- **Overall Readiness:** {{ summary.overall_readiness | upper }}
+
+{% if summary.overall_readiness == 'not_ready' %}
+⚠️ **ATTENTION REQUIRED:** Critical issues found that must be resolved before upgrade.
+{% elif summary.overall_readiness == 'ready_with_warnings' %}
+⚡ **CAUTION:** Warnings found that should be reviewed before upgrade.
+{% else %}
+✅ **READY:** No critical issues found. Proceed with caution and proper testing.
+{% endif %}
+
+## Configuration
+
+{% if assessment.config %}
+- **AWS Region:** {{ assessment.config.aws_configuration.region }}
+- **AWS Profile:** {{ assessment.config.aws_configuration.credentials_profile }}
+- **Target Control Plane Version:** {{ assessment.config.upgrade_targets.control_plane_target_version }}
+- **Target Data Plane Version:** {{ assessment.config.upgrade_targets.data_plane_target_version }}
+{% endif %}
+
+## Cluster Assessment Details
+
+{% for cluster in assessment.clusters %}
+### {{ cluster.cluster_name }}
+
+#### Cluster Information
+- **Current Control Plane Version:** {{ cluster.cluster_info.version }}
+- **Current Data Plane Version:** {{ cluster.cluster_info.version }}
+- **Status:** {{ cluster.cluster_info.status }}
+- **Endpoint:** {{ cluster.cluster_info.endpoint }}
+
+#### Compatibility Analysis
+{% if cluster.compatibility %}
+- **Compatible:** {{ "✅ Yes" if cluster.compatibility.compatible else "❌ No" }}
+{% if cluster.compatibility.issues %}
+- **Issues:**
+{% for issue in cluster.compatibility.issues %}
+  - {{ issue }}
+{% endfor %}
+{% endif %}
+{% if cluster.compatibility.warnings %}
+- **Warnings:**
+{% for warning in cluster.compatibility.warnings %}
+  - {{ warning }}
+{% endfor %}
+{% endif %}
+{% if cluster.compatibility.upgrade_path %}
+- **Upgrade Path:** {{ cluster.compatibility.upgrade_path | join(' → ') }}
+{% endif %}
+{% endif %}
+
+#### Cluster Insights
+{% if cluster.cluster_insights %}
+- **Total Insights:** {{ cluster.cluster_insights.summary.total_insights }}
+{% if cluster.cluster_insights.upgrade_blockers %}
+- **Upgrade Blockers:**
+{% for blocker in cluster.cluster_insights.upgrade_blockers %}
+  - **{{ blocker.name }}** ({{ blocker.category }}): {{ blocker.description }}
+{% endfor %}
+{% endif %}
+{% if cluster.cluster_insights.warnings %}
+- **Warnings:**
+{% for warning in cluster.cluster_insights.warnings %}
+  - **{{ warning.name }}** ({{ warning.category }}): {{ warning.description }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+#### Deprecated APIs
+{% if cluster.deprecated_apis %}
+{% if cluster.deprecated_apis.kubent_results.status == 'success' %}
+- **Kubent Scan:** {{ cluster.deprecated_apis.kubent_results.summary.total_deprecated }} deprecated APIs found
+{% endif %}
+{% if cluster.deprecated_apis.pluto_results.status == 'success' %}
+- **Pluto Scan:** {{ cluster.deprecated_apis.pluto_results.summary.total_deprecated }} deprecated APIs found
+{% endif %}
+{% if cluster.deprecated_apis.combined_summary.total_issues_found > 0 %}
+- **Action Required:** Review and update deprecated APIs before upgrade
+{% endif %}
+{% endif %}
+
+#### Workload Analysis
+{% if cluster.workload_analysis %}
+{% if cluster.workload_analysis.pod_disruption_budgets %}
+- **Pod Disruption Budgets:** {{ cluster.workload_analysis.pod_disruption_budgets.total_pdbs }} found
+{% if cluster.workload_analysis.pod_disruption_budgets.potential_issues %}
+- **PDB Issues:**
+{% for issue in cluster.workload_analysis.pod_disruption_budgets.potential_issues %}
+  - {{ issue.pdb }}: {{ issue.issue }} ({{ issue.severity }})
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
+
+---
+{% endfor %}
+
+## Recommendations
+
+### Pre-Upgrade Actions
+1. **Review Critical Issues:** Address all critical issues identified in this report
+2. **Update Deprecated APIs:** Replace or update any deprecated API usage
+3. **Test in Staging:** Perform upgrade in a staging environment first
+4. **Backup Strategy:** Ensure proper backup and rollback procedures are in place
+
+### During Upgrade
+1. **Monitor Closely:** Watch cluster health and workload availability
+2. **Staged Approach:** Upgrade control plane first, then data plane
+3. **Validate Each Step:** Verify functionality after each upgrade step
+
+### Post-Upgrade
+1. **Validate Workloads:** Ensure all applications are functioning correctly
+2. **Update Configurations:** Update any cluster-specific configurations
+3. **Monitor Performance:** Watch for any performance degradation
+
+## Tools and Resources
+
+- **kubent:** Kubernetes deprecated API scanner
+- **pluto:** Kubernetes deprecated API detector
+- **AWS EKS Cluster Insights:** Built-in AWS assessment tool
+- **EKS Upgrade Documentation:** https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html
+
+---
+
+*This report was generated by the EKS Upgrade Assessment Toolkit*

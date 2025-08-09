@@ -2,6 +2,19 @@
 
 A comprehensive toolkit to assess EKS cluster readiness for upgrades following AWS best practices. This toolkit focuses on thorough assessment and analysis to help you make informed upgrade decisions.
 
+## Project Status
+
+✅ **INITIALIZED** - The project structure has been set up with all core components:
+
+- ✅ Complete module structure (`src/assessment/`, `src/generators/`, `src/utils/`)
+- ✅ Assessment modules (cluster insights, deprecated APIs, compatibility, workload analysis)
+- ✅ Report generators (Markdown, HTML, JSON, web dashboard)
+- ✅ Script generators (validation, collection, scanning scripts)
+- ✅ Jinja2 templates for reports and scripts
+- ✅ Test framework setup
+- ✅ Development tools (Makefile, setup.py)
+- ✅ Documentation and configuration examples
+
 ## Features
 
 - **Automated Cluster Discovery**: Automatically discovers all EKS clusters in your region
@@ -12,6 +25,30 @@ A comprehensive toolkit to assess EKS cluster readiness for upgrades following A
 - **Standalone Metadata Generator**: Independent module for cluster metadata collection
 
 ## Installation
+
+### Quick Setup
+
+1. Install dependencies:
+   ```bash
+   make install
+   # or manually:
+   pip install -r requirements.txt
+   pip install -e .
+   ```
+
+2. Install external tools (optional but recommended):
+   ```bash
+   make install-tools
+   # or manually:
+   ./install-tools.sh
+   ```
+
+3. Set up development environment (if contributing):
+   ```bash
+   make setup-dev
+   ```
+
+### Manual Installation
 
 1. Clone or download the toolkit
 2. Install Python dependencies:
@@ -37,6 +74,25 @@ A comprehensive toolkit to assess EKS cluster readiness for upgrades following A
    ```
 
 ## Quick Start
+
+### Using Make Commands
+
+1. **Run Example Assessment**:
+   ```bash
+   make run-example
+   ```
+
+2. **Run Tests**:
+   ```bash
+   make test
+   ```
+
+3. **View All Available Commands**:
+   ```bash
+   make help
+   ```
+
+### Manual Usage
 
 1. **Initialize Configuration**:
    ```bash

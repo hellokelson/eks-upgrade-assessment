@@ -868,11 +868,13 @@ echo "✅ Assessment validation completed"
 def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
     """Generate web UI inside assessment-reports using the generated report data."""
     try:
+        from jinja2 import Environment, FileSystemLoader
+        
         # Create web UI directory inside assessment-reports
         web_ui_dir = Path(output_dir) / "assessment-reports" / "web-ui"
         web_ui_dir.mkdir(parents=True, exist_ok=True)
         
-        # Step 1: Extract assessment data from cluster analysis
+        # Step 1: Create assessment data for the web UI (simplified format)
         assessment_data = {}
         for cluster_name, analysis in cluster_analysis.items():
             cluster_info = analysis.get('cluster_info', {})
@@ -881,12 +883,12 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
             pluto_results = analysis.get('pluto_results', {})
             cluster_metadata = analysis.get('cluster_metadata', {})
             
-            # Create comprehensive assessment data for web UI
+            # Create simplified assessment data for web UI
             assessment_data[cluster_name] = {
                 'cluster_info': {
                     'name': cluster_name,
-                    'version': cluster_info.version if hasattr(cluster_info, 'version') else 'Unknown',
-                    'status': cluster_info.status if hasattr(cluster_info, 'status') else 'Unknown',
+                    'version': cluster_info.version if hasattr(cluster_info, 'version') else cluster_metadata.get('cluster_version', 'Unknown'),
+                    'status': cluster_info.status if hasattr(cluster_info, 'status') else cluster_metadata.get('cluster_status', 'Unknown'),
                     'endpoint': cluster_info.endpoint if hasattr(cluster_info, 'endpoint') else 'Unknown'
                 },
                 'assessment_results': {
@@ -909,13 +911,7 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
                         }
                     }
                 },
-                'cluster_metadata': {
-                    'node_groups': len(cluster_metadata.get('node_groups', [])),
-                    'fargate_profiles': len(cluster_metadata.get('fargate_profiles', [])),
-                    'addons': len(cluster_metadata.get('addons', [])),
-                    'karpenter_installed': cluster_metadata.get('karpenter', {}).get('installed', False),
-                    'aws_plugins': len(cluster_metadata.get('aws_plugins', {}).get('installed_plugins', []))
-                }
+                'cluster_metadata': cluster_metadata  # Include full metadata for detailed view
             }
         
         # Step 2: Save assessment data JSON for web UI
@@ -923,8 +919,57 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
         with open(assessment_data_file, 'w') as f:
             json.dump(assessment_data, f, indent=2, default=str)
         
-        # Step 3: Generate standalone HTML dashboard
-        html_content = generate_assessment_dashboard_html(assessment_data)
+        # Step 2.1: Copy clusters-metadata.json to web-ui directory for direct access
+        clusters_metadata_source = Path(output_dir) / "assessment-reports" / "clusters-metadata.json"
+        clusters_metadata_dest = web_ui_dir / "clusters-metadata.json"
+        if clusters_metadata_source.exists():
+            import shutil
+            shutil.copy2(clusters_metadata_source, clusters_metadata_dest)
+        else:
+            # Create clusters metadata from cluster_analysis if source doesn't exist
+            clusters_metadata = {}
+            for cluster_name, analysis in cluster_analysis.items():
+                clusters_metadata[cluster_name] = analysis.get('cluster_metadata', {})
+            
+            with open(clusters_metadata_dest, 'w') as f:
+                json.dump(clusters_metadata, f, indent=2, default=str)
+        
+        # Step 3: Generate HTML dashboard using template
+        try:
+            # Try to use the template system
+            from datetime import datetime
+            template_dir = Path(__file__).parent.parent / "templates"
+            if template_dir.exists():
+                env = Environment(loader=FileSystemLoader(str(template_dir)))
+                template = env.get_template('web-dashboard.html.j2')
+                
+                # Prepare clusters metadata from cluster_analysis
+                clusters_metadata = {}
+                for cluster_name, analysis in cluster_analysis.items():
+                    clusters_metadata[cluster_name] = analysis.get('cluster_metadata', {})
+                
+                # Custom JSON serializer for datetime objects
+                def json_serial(obj):
+                    """JSON serializer for objects not serializable by default json code"""
+                    if hasattr(obj, 'isoformat'):
+                        return obj.isoformat()
+                    return str(obj)
+                
+                # Convert data to JSON-serializable format before passing to template
+                clusters_metadata_json = json.loads(json.dumps(clusters_metadata, default=json_serial))
+                assessment_data_json = json.loads(json.dumps(assessment_data, default=json_serial))
+                
+                html_content = template.render(
+                    clusters_metadata=clusters_metadata_json,
+                    assessment_data=assessment_data_json,
+                    generation_time=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+                )
+            else:
+                # Fallback to inline HTML generation
+                html_content = generate_assessment_dashboard_html_inline(assessment_data, cluster_analysis)
+        except Exception as template_error:
+            print(f"⚠️  Template error: {template_error}, using fallback HTML generation")
+            html_content = generate_assessment_dashboard_html_inline(assessment_data, cluster_analysis)
         
         # Step 4: Save HTML dashboard
         html_file = web_ui_dir / "index.html"
@@ -936,6 +981,75 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
         
     except Exception as e:
         print(f"⚠️  Warning: Could not generate web UI from reports: {str(e)}")
+
+
+def generate_assessment_dashboard_html_inline(assessment_data: dict, cluster_analysis: dict) -> str:
+    """Generate HTML content for the assessment dashboard using inline template."""
+    from datetime import datetime
+    
+    # Prepare clusters metadata from cluster_analysis
+    clusters_metadata = {}
+    for cluster_name, analysis in cluster_analysis.items():
+        clusters_metadata[cluster_name] = analysis.get('cluster_metadata', {})
+    
+    # Read the template file directly
+    template_path = Path(__file__).parent.parent / "templates" / "web-dashboard.html.j2"
+    
+    if template_path.exists():
+        with open(template_path, 'r') as f:
+            template_content = f.read()
+        
+        # Simple template variable replacement (basic implementation)
+        def json_serial(obj):
+            """JSON serializer for objects not serializable by default json code"""
+            if hasattr(obj, 'isoformat'):
+                return obj.isoformat()
+            return str(obj)
+        
+        html_content = template_content.replace(
+            '{{ clusters_metadata | tojson }}', 
+            json.dumps(clusters_metadata, default=json_serial, indent=2)
+        ).replace(
+            '{{ assessment_data | tojson }}', 
+            json.dumps(assessment_data, default=json_serial, indent=2)
+        ).replace(
+            '{{ generation_time }}', 
+            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        )
+        return html_content
+    else:
+        # Ultimate fallback - basic HTML
+        return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EKS Upgrade Assessment Dashboard</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+        .header {{ background: #232f3e; color: white; padding: 20px; text-align: center; }}
+        .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+        .cluster-info {{ background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 EKS Upgrade Assessment Dashboard</h1>
+        <p>Interactive analysis of your EKS clusters for upgrade readiness</p>
+    </div>
+    <div class="container">
+        <h2>Clusters Overview</h2>
+        {''.join([f'<div class="cluster-info"><h3>{name}</h3><p>Status: {data.get("cluster_metadata", {}).get("cluster_status", "Unknown")}</p></div>' for name, data in assessment_data.items()])}
+        <script>
+            console.log('Dashboard loaded with {len(assessment_data)} clusters');
+            const clustersData = {json.dumps(clusters_metadata, default=str)};
+            const assessmentData = {json.dumps(assessment_data, default=str)};
+        </script>
+    </div>
+</body>
+</html>
+        """
 
 
 def generate_assessment_dashboard_html(assessment_data: dict) -> str:
@@ -1167,6 +1281,89 @@ def get_status_emoji(status: str) -> str:
     }
     return status_map.get(status, f'❓ {status.upper()}')
 
+def generate_assessment_reports(config: EKSUpgradeConfig, cluster_analysis: dict, output_dir: str):
+    """Generate assessment reports."""
+    assessment_dir = Path(output_dir, "assessment-reports")
+    
+    # Generate assessment report with table format
+    report_content = "# Pre-upgrade Assessment Report\n\n"
+    
+    # Generate summary table
+    report_content += "## Assessment Summary\n\n"
+    report_content += "| Cluster Name | Overall Result | Current Version | Target Version | Status | Insights Status | Kubent Status | Pluto Status | Deprecated APIs |\n"
+    report_content += "|--------------|----------------|----------------|----------------|--------|----------------|---------------|--------------|-----------------|\n"
+    
+    for cluster_name, analysis in cluster_analysis.items():
+        cluster_info = analysis['cluster_info']
+        insights = analysis.get('insights', [])
+        kubent_results = analysis.get('kubent_results', {})
+        pluto_results = analysis.get('pluto_results', {})
+        deprecated_api_results = analysis.get('deprecated_api_results', {})
+        
+        # Determine overall status
+        insights_status = "✅ PASS" if not any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights) else "❌ ISSUES"
+        
+        # Check if kubent found deprecated APIs (not just if the scan succeeded)
+        if kubent_results.get('status') == 'success' and len(kubent_results.get('deprecated_apis', [])) > 0:
+            kubent_status = "❌ FOUND"
+        else:
+            kubent_status = get_status_emoji(kubent_results.get('status', 'not_run'))
+        
+        # Check if pluto found deprecated APIs (not just if the scan succeeded)
+        if pluto_results.get('status') == 'success' and len(pluto_results.get('deprecated_apis', [])) > 0:
+            pluto_status = "❌ FOUND"
+        else:
+            pluto_status = get_status_emoji(pluto_results.get('status', 'not_run'))
+        
+        # Check if deprecated APIs were actually found (not just if the check succeeded)
+        deprecated_apis_found = False
+        if deprecated_api_results.get('status') == 'success':
+            metrics_apis = deprecated_api_results.get('metrics_check', {}).get('deprecated_apis', [])
+            audit_apis = deprecated_api_results.get('audit_logs_check', {}).get('deprecated_apis', [])
+            deprecated_apis_found = len(metrics_apis) > 0 or len(audit_apis) > 0
+        
+        if deprecated_apis_found:
+            deprecated_api_status = "❌ FOUND"
+        else:
+            deprecated_api_status = get_status_emoji(deprecated_api_results.get('status', 'not_run'))
+        
+        # Calculate overall result with improved logic
+        # Check for critical issues that require immediate attention
+        has_critical_issues = (
+            any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights) or
+            (kubent_results.get('status') == 'success' and len(kubent_results.get('deprecated_apis', [])) > 0) or
+            (pluto_results.get('status') == 'success' and len(pluto_results.get('deprecated_apis', [])) > 0)
+        )
+        
+        # Check for deprecated API usage that might not be critical (if EKS Insights pass)
+        has_deprecated_api_usage = (
+            deprecated_api_results.get('status') == 'success' and 
+            (len(deprecated_api_results.get('metrics_check', {}).get('deprecated_apis', [])) > 0 or
+             len(deprecated_api_results.get('audit_logs_check', {}).get('deprecated_apis', [])) > 0)
+        )
+        
+        # Check if EKS Insights show any deprecated API issues for target versions
+        eks_insights_has_deprecated_issues = any(
+            insight.get('insightStatus', {}).get('status') == 'ERROR' and 
+            'deprecated' in insight.get('name', '').lower()
+            for insight in insights
+        )
+        
+        # Determine overall result based on severity
+        if has_critical_issues:
+            overall_result = "❌ NEEDS ATTENTION"
+        elif has_deprecated_api_usage and eks_insights_has_deprecated_issues:
+            overall_result = "❌ NEEDS ATTENTION"  # EKS Insights confirm this is critical
+        elif has_deprecated_api_usage:
+            overall_result = "⚠️ WARNING"  # Deprecated APIs found but EKS Insights show PASSING
+        else:
+            overall_result = "✅ READY"
+        
+        report_content += f"| {cluster_name} | {overall_result} | {cluster_info.version} | {config.upgrade_targets.control_plane_target_version} | {cluster_info.status} | {insights_status} | {kubent_status} | {pluto_status} | {deprecated_api_status} |\n"
+    
+    # Save the report
+    with open(assessment_dir / "assessment-report.md", 'w') as f:
+        f.write(report_content)
 
 def generate_documentation(config: EKSUpgradeConfig, cluster_analysis: dict, output_dir: str):
     """Generate assessment documentation based on analysis."""
@@ -1977,460 +2174,7 @@ For issues or questions, refer to the AWS EKS documentation and best practices g
         f.write(readme_content)
 
 
-def generate_assessment_reports(config: EKSUpgradeConfig, cluster_analysis: dict, output_dir: str):
-    """Generate assessment reports."""
-    assessment_dir = Path(output_dir, "assessment-reports")
-    
-    # Generate assessment report with table format
-    report_content = "# Pre-upgrade Assessment Report\n\n"
-    
-    # Generate summary table
-    report_content += "## Assessment Summary\n\n"
-    report_content += "| Cluster Name | Overall Result | Current Version | Target Version | Status | Insights Status | Kubent Status | Pluto Status | Deprecated APIs |\n"
-    report_content += "|--------------|----------------|----------------|----------------|--------|----------------|---------------|--------------|-----------------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_info = analysis['cluster_info']
-        insights = analysis.get('insights', [])
-        kubent_results = analysis.get('kubent_results', {})
-        pluto_results = analysis.get('pluto_results', {})
-        deprecated_api_results = analysis.get('deprecated_api_results', {})
-        
-        # Determine overall status
-        insights_status = "✅ PASS" if not any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights) else "❌ ISSUES"
-        
-        # Check if kubent found deprecated APIs (not just if the scan succeeded)
-        if kubent_results.get('status') == 'success' and len(kubent_results.get('deprecated_apis', [])) > 0:
-            kubent_status = "❌ FOUND"
-        else:
-            kubent_status = get_status_emoji(kubent_results.get('status', 'not_run'))
-        
-        # Check if pluto found deprecated APIs (not just if the scan succeeded)
-        if pluto_results.get('status') == 'success' and len(pluto_results.get('deprecated_apis', [])) > 0:
-            pluto_status = "❌ FOUND"
-        else:
-            pluto_status = get_status_emoji(pluto_results.get('status', 'not_run'))
-        
-        # Check if deprecated APIs were actually found (not just if the check succeeded)
-        deprecated_apis_found = False
-        if deprecated_api_results.get('status') == 'success':
-            metrics_apis = deprecated_api_results.get('metrics_check', {}).get('deprecated_apis', [])
-            audit_apis = deprecated_api_results.get('audit_logs_check', {}).get('deprecated_apis', [])
-            deprecated_apis_found = len(metrics_apis) > 0 or len(audit_apis) > 0
-        
-        if deprecated_apis_found:
-            deprecated_api_status = "❌ FOUND"
-        else:
-            deprecated_api_status = get_status_emoji(deprecated_api_results.get('status', 'not_run'))
-        
-        # Calculate overall result with improved logic
-        # Check for critical issues that require immediate attention
-        has_critical_issues = (
-            any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights) or
-            (kubent_results.get('status') == 'success' and len(kubent_results.get('deprecated_apis', [])) > 0) or
-            (pluto_results.get('status') == 'success' and len(pluto_results.get('deprecated_apis', [])) > 0)
-        )
-        
-        # Check for deprecated API usage that might not be critical (if EKS Insights pass)
-        has_deprecated_api_usage = (
-            deprecated_api_results.get('status') == 'success' and 
-            (len(deprecated_api_results.get('metrics_check', {}).get('deprecated_apis', [])) > 0 or
-             len(deprecated_api_results.get('audit_logs_check', {}).get('deprecated_apis', [])) > 0)
-        )
-        
-        # Check if EKS Insights show any deprecated API issues for target versions
-        eks_insights_has_deprecated_issues = any(
-            insight.get('insightStatus', {}).get('status') == 'ERROR' and 
-            'deprecated' in insight.get('name', '').lower()
-            for insight in insights
-        )
-        
-        # Determine overall result based on severity
-        if has_critical_issues:
-            overall_result = "❌ NEEDS ATTENTION"
-        elif has_deprecated_api_usage and eks_insights_has_deprecated_issues:
-            overall_result = "❌ NEEDS ATTENTION"  # EKS Insights confirm this is critical
-        elif has_deprecated_api_usage:
-            overall_result = "⚠️ WARNING"  # Deprecated APIs found but EKS Insights show PASSING
-        else:
-            overall_result = "✅ READY"
-        
-        report_content += f"| {cluster_name} | {overall_result} | {cluster_info.version} | {config.upgrade_targets.control_plane_target_version} | {cluster_info.status} | {insights_status} | {kubent_status} | {pluto_status} | {deprecated_api_status} |\n"
-    
-    # Generate cluster metadata table
-    report_content += "\n## Cluster Metadata Overview\n\n"
-    report_content += "| Cluster Name | Version | Status | Node Groups | Fargate | Addons | Karpenter | AWS Plugins | Created |\n"
-    report_content += "|--------------|---------|--------|-------------|---------|--------|-----------|-------------|----------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        
-        # Extract upgrade-relevant information
-        version = cluster_metadata.get('cluster_version', 'N/A')
-        status = cluster_metadata.get('cluster_status', 'N/A')
-        node_groups_count = len(cluster_metadata.get('node_groups', []))
-        fargate_profiles_count = len(cluster_metadata.get('fargate_profiles', []))
-        addons_count = len(cluster_metadata.get('addons', []))
-        
-        # Karpenter status
-        karpenter = cluster_metadata.get('karpenter', {})
-        if karpenter.get('installed', False):
-            node_pools = karpenter.get('node_pools_count', 0)
-            provisioners = karpenter.get('provisioners_count', 0)
-            if node_pools > 0:
-                karpenter_status = f"✅ {node_pools} pools"
-            elif provisioners > 0:
-                karpenter_status = f"✅ {provisioners} provisioners"
-            else:
-                karpenter_status = "✅ Installed"
-        else:
-            karpenter_status = "❌ Not Found"
-        
-        # AWS plugins summary
-        aws_plugins = cluster_metadata.get('aws_plugins', {})
-        plugin_list = []
-        if aws_plugins.get('load_balancer_controller'):
-            plugin_list.append('ALB')
-        if aws_plugins.get('cluster_autoscaler'):
-            plugin_list.append('CA')
-        if aws_plugins.get('ebs_csi_driver'):
-            plugin_list.append('EBS')
-        if aws_plugins.get('efs_csi_driver'):
-            plugin_list.append('EFS')
-        
-        aws_plugins_status = ', '.join(plugin_list) if plugin_list else "Core only"
-        
-        # Created date (shortened)
-        created_date = cluster_metadata.get('created_at', 'N/A')
-        if created_date != 'N/A' and 'T' in created_date:
-            created_date = created_date.split('T')[0]  # Just the date part
-        
-        report_content += f"| {cluster_name} | {version} | {status} | {node_groups_count} | {fargate_profiles_count} | {addons_count} | {karpenter_status} | {aws_plugins_status} | {created_date} |\n"
-    
-    # Generate detailed cluster resources table from clusters-metadata.json
-    report_content += "\n## Detailed Cluster Resources Information\n\n"
-    report_content += "### Node Groups Details\n\n"
-    report_content += "| Cluster Name | Node Group Name | Status | Version | Capacity Type | Instance Types | AMI Type |\n"
-    report_content += "|--------------|-----------------|--------|---------|---------------|----------------|----------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        node_groups = cluster_metadata.get('node_groups', [])
-        
-        if node_groups:
-            for ng in node_groups:
-                instance_types_str = ', '.join(ng.get('instance_types', [])[:3])  # Show first 3 types
-                if len(ng.get('instance_types', [])) > 3:
-                    instance_types_str += f" (+{len(ng.get('instance_types', [])) - 3} more)"
-                
-                report_content += f"| {cluster_name} | {ng.get('name', 'N/A')} | {ng.get('status', 'N/A')} | {ng.get('version', 'N/A')} | {ng.get('capacity_type', 'N/A')} | {instance_types_str} | {ng.get('ami_type', 'N/A')} |\n"
-        else:
-            report_content += f"| {cluster_name} | No node groups | - | - | - | - | - |\n"
-    
-    report_content += "\n### EKS Addons Details\n\n"
-    report_content += "| Cluster Name | Addon Name | Version | Status | Type |\n"
-    report_content += "|--------------|------------|---------|--------|---------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        addons = cluster_metadata.get('addons', [])
-        
-        if addons:
-            for addon in addons:
-                addon_type = "Core" if addon.get('name') in ['vpc-cni', 'coredns', 'kube-proxy'] else "Additional"
-                report_content += f"| {cluster_name} | {addon.get('name', 'N/A')} | {addon.get('version', 'N/A')} | {addon.get('status', 'N/A')} | {addon_type} |\n"
-        else:
-            report_content += f"| {cluster_name} | No addons | - | - | - |\n"
-    
-    report_content += "\n### Karpenter Resources Details\n\n"
-    report_content += "| Cluster Name | Karpenter Status | Node Pools | Provisioners | Version |\n"
-    report_content += "|--------------|------------------|------------|--------------|----------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        karpenter = cluster_metadata.get('karpenter', {})
-        
-        installed = "✅ Installed" if karpenter.get('installed', False) else "❌ Not Installed"
-        node_pools_count = karpenter.get('node_pools_count', 0)
-        provisioners_count = karpenter.get('provisioners_count', 0)
-        version = karpenter.get('version', 'N/A')
-        
-        report_content += f"| {cluster_name} | {installed} | {node_pools_count} | {provisioners_count} | {version} |\n"
-    
-    report_content += "\n### Fargate Profiles Details\n\n"
-    report_content += "| Cluster Name | Profile Name | Status |\n"
-    report_content += "|--------------|--------------|--------|\n"
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        fargate_profiles = cluster_metadata.get('fargate_profiles', [])
-        
-        if fargate_profiles:
-            for fp in fargate_profiles:
-                report_content += f"| {cluster_name} | {fp.get('name', 'N/A')} | {fp.get('status', 'N/A')} |\n"
-        else:
-            report_content += f"| {cluster_name} | No Fargate profiles | - |\n"
-    
-    # Generate cluster metadata JSON section (upgrade-focused)
-    report_content += "\n## EKS Upgrade Metadata (JSON)\n\n"
-    report_content += "Upgrade-focused cluster metadata in JSON format:\n\n"
-    
-    # Create a consolidated JSON file for all clusters
-    all_clusters_metadata = {}
-    
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_metadata = analysis.get('cluster_metadata', {})
-        all_clusters_metadata[cluster_name] = cluster_metadata
-        
-        report_content += f"### {cluster_name} Upgrade Metadata\n\n"
-        report_content += "```json\n"
-        report_content += json.dumps(cluster_metadata, indent=2, default=str)
-        report_content += "\n```\n\n"
-        
-        # Add note about original data files
-        report_content += f"📁 **Original cluster data files saved to:** `cluster-metadata/{cluster_name}/`\n\n"
-    
-    # Save consolidated JSON metadata file
-    metadata_json_file = assessment_dir / "clusters-metadata.json"
-    with open(metadata_json_file, 'w') as f:
-        json.dump(all_clusters_metadata, f, indent=2, default=str)
-    
-    report_content += f"📄 **Consolidated JSON metadata file:** `01-pre-upgrade-assessment/clusters-metadata.json`\n\n"
-    
-    # Generate detailed results for each cluster
-    for cluster_name, analysis in cluster_analysis.items():
-        cluster_info = analysis['cluster_info']
-        insights = analysis.get('insights', [])
-        kubent_results = analysis.get('kubent_results', {})
-        pluto_results = analysis.get('pluto_results', {})
-        deprecated_api_results = analysis.get('deprecated_api_results', {})
-        
-        report_content += f"\n## Detailed Results: {cluster_name}\n\n"
-        
-        report_content += f"""### Basic Information
-- **Current Version:** {cluster_info.version}
-- **Platform Version:** {cluster_info.platform_version}
-- **Status:** {cluster_info.status}
-- **Created:** {cluster_info.created_at}
 
-"""
-        
-        # EKS Cluster Insights Results
-        report_content += "### EKS Cluster Insights Results\n\n"
-        if insights:
-            report_content += "| Insight Name | Status | Category | Kubernetes Version | Description |\n"
-            report_content += "|--------------|--------|----------|-------------------|-------------|\n"
-            
-            for insight in insights:
-                status = insight.get('insightStatus', {}).get('status', 'UNKNOWN')
-                status_emoji = "✅" if status == "PASSING" else "❌" if status == "ERROR" else "⚠️"
-                name = insight.get('name', 'Unknown Insight')
-                category = insight.get('category', 'N/A')
-                k8s_version = insight.get('kubernetesVersion', 'N/A')
-                description = insight.get('description', 'No description available')[:100] + "..." if len(insight.get('description', '')) > 100 else insight.get('description', 'No description available')
-                
-                report_content += f"| {name} | {status_emoji} {status} | {category} | {k8s_version} | {description} |\n"
-        else:
-            report_content += "No cluster insights available or insights check was disabled.\n"
-        
-        # Kubent Scan Results
-        report_content += "\n### Kubent Scan Results\n\n"
-        if kubent_results.get('status') == 'success':
-            deprecated_apis = kubent_results.get('deprecated_apis', [])
-            if deprecated_apis:
-                report_content += "| Resource Kind | Name | Namespace | API Version | Replacement | Removed In |\n"
-                report_content += "|---------------|------|-----------|-------------|-------------|------------|\n"
-                
-                for api in deprecated_apis:
-                    try:
-                        # Handle different kubent output formats
-                        if isinstance(api, dict):
-                            kind = api.get('Kind', 'N/A')
-                            name = api.get('Name', 'N/A')
-                            namespace = api.get('Namespace', '<cluster-scoped>')
-                            api_version = api.get('ApiVersion', 'N/A')
-                            replacement = api.get('ReplaceWith', 'N/A')
-                            removed_in = api.get('RemovedIn', 'N/A')
-                        elif isinstance(api, list) and len(api) >= 6:
-                            # Handle list format: [Kind, Name, Namespace, ApiVersion, ReplaceWith, RemovedIn]
-                            kind = api[0] if len(api) > 0 else 'N/A'
-                            name = api[1] if len(api) > 1 else 'N/A'
-                            namespace = api[2] if len(api) > 2 else '<cluster-scoped>'
-                            api_version = api[3] if len(api) > 3 else 'N/A'
-                            replacement = api[4] if len(api) > 4 else 'N/A'
-                            removed_in = api[5] if len(api) > 5 else 'N/A'
-                        else:
-                            # Fallback for unknown format
-                            kind = str(api)[:50] + "..." if len(str(api)) > 50 else str(api)
-                            name = 'Unknown format'
-                            namespace = 'N/A'
-                            api_version = 'N/A'
-                            replacement = 'N/A'
-                            removed_in = 'N/A'
-                        
-                        report_content += f"| {kind} | {name} | {namespace} | {api_version} | {replacement} | {removed_in} |\n"
-                    except Exception as e:
-                        # If there's an error processing this item, add a debug row
-                        report_content += f"| Error processing item | {str(e)[:30]} | N/A | N/A | N/A | N/A |\n"
-            else:
-                report_content += "✅ No deprecated APIs found by kubent.\n"
-        elif kubent_results.get('status') == 'tool_not_found':
-            report_content += "⚠️ kubent tool not found. Run `python src/main.py install-tools` to install.\n"
-        elif kubent_results.get('status') == 'kubectl_not_configured':
-            report_content += "⚠️ kubectl not configured for cluster access. Configure kubectl first:\n"
-            report_content += f"```bash\naws eks update-kubeconfig --region {config.aws_configuration.region} --name {cluster_name}\n```\n"
-        elif kubent_results.get('status') == 'timeout':
-            report_content += "⚠️ kubent scan timed out. For large clusters, try these alternatives:\n\n"
-            report_content += "**Option 1: Manual kubent scan**\n"
-            report_content += "```bash\n"
-            report_content += f"# Run kubent manually (may take several minutes)\n"
-            report_content += f"kubent --target-version 1.30\n"
-            report_content += "```\n\n"
-            report_content += "**Option 2: Scan exported manifests**\n"
-            report_content += "```bash\n"
-            report_content += f"# Export cluster resources and scan offline\n"
-            report_content += f"kubectl get all --all-namespaces -o yaml > cluster-resources.yaml\n"
-            report_content += f"kubent --filename cluster-resources.yaml --target-version 1.30\n"
-            report_content += "```\n\n"
-            report_content += "**Option 3: Check specific resource types**\n"
-            report_content += "```bash\n"
-            report_content += f"# Check common deprecated resources manually\n"
-            report_content += f"kubectl get podsecuritypolicy --all-namespaces 2>/dev/null || echo 'No PSPs found'\n"
-            report_content += f"kubectl get ingress.extensions --all-namespaces 2>/dev/null || echo 'No extensions/v1beta1 ingress found'\n"
-            report_content += f"kubectl get deployment.apps/v1beta1 --all-namespaces 2>/dev/null || echo 'No v1beta1 deployments found'\n"
-            report_content += "```\n"
-        elif kubent_results.get('status') == 'not_run':
-            report_content += "⚠️ kubent scan was disabled in configuration.\n"
-        else:
-            error = kubent_results.get('error', 'Unknown error')
-            report_content += f"❌ kubent scan failed: {error}\n"
-        
-        # Pluto Scan Results
-        report_content += "\n### Pluto Scan Results\n\n"
-        if pluto_results.get('status') == 'success':
-            deprecated_apis = pluto_results.get('deprecated_apis', [])
-            if deprecated_apis:
-                report_content += "| Resource Kind | Name | API Version | Replacement | Deprecated | Removed |\n"
-                report_content += "|---------------|------|-------------|-------------|------------|----------|\n"
-                
-                for api in deprecated_apis:
-                    try:
-                        # Handle different pluto output formats
-                        if isinstance(api, dict):
-                            kind = api.get('kind', 'N/A')
-                            name = api.get('name', 'N/A')
-                            api_version = api.get('api-version', 'N/A')
-                            replacement = api.get('replacement-api', 'N/A')
-                            deprecated = api.get('deprecated-in', 'N/A')
-                            removed = api.get('removed-in', 'N/A')
-                        elif isinstance(api, list) and len(api) >= 6:
-                            # Handle list format: [kind, name, api-version, replacement-api, deprecated-in, removed-in]
-                            kind = api[0] if len(api) > 0 else 'N/A'
-                            name = api[1] if len(api) > 1 else 'N/A'
-                            api_version = api[2] if len(api) > 2 else 'N/A'
-                            replacement = api[3] if len(api) > 3 else 'N/A'
-                            deprecated = api[4] if len(api) > 4 else 'N/A'
-                            removed = api[5] if len(api) > 5 else 'N/A'
-                        else:
-                            # Fallback for unknown format
-                            kind = str(api)[:50] + "..." if len(str(api)) > 50 else str(api)
-                            name = 'Unknown format'
-                            api_version = 'N/A'
-                            replacement = 'N/A'
-                            deprecated = 'N/A'
-                            removed = 'N/A'
-                        
-                        report_content += f"| {kind} | {name} | {api_version} | {replacement} | {deprecated} | {removed} |\n"
-                    except Exception as e:
-                        # If there's an error processing this item, add a debug row
-                        report_content += f"| Error processing item | {str(e)[:30]} | N/A | N/A | N/A | N/A |\n"
-            else:
-                report_content += "✅ No deprecated APIs found by pluto.\n"
-        elif pluto_results.get('status') == 'tool_not_found':
-            report_content += "⚠️ pluto tool not found. Run `python src/main.py install-tools` to install.\n"
-        elif pluto_results.get('status') == 'kubectl_not_configured':
-            report_content += "⚠️ kubectl not configured for cluster access. Configure kubectl first:\n"
-            report_content += f"```bash\naws eks update-kubeconfig --region {config.aws_configuration.region} --name {cluster_name}\n```\n"
-        elif pluto_results.get('status') == 'skipped':
-            report_content += "⚠️ pluto scan was skipped for large cluster count optimization.\n"
-            report_content += "Run individual cluster analysis for detailed pluto results if needed:\n"
-            report_content += "```bash\n"
-            report_content += f"# Configure kubectl for specific cluster\n"
-            report_content += f"aws eks update-kubeconfig --region {config.aws_configuration.region} --name {cluster_name}\n"
-            report_content += f"# Run pluto manually\n"
-            report_content += f"pluto detect-all-in-cluster\n"
-            report_content += "```\n"
-        elif pluto_results.get('status') == 'not_run':
-            report_content += "⚠️ pluto scan was disabled in configuration.\n"
-        else:
-            error = pluto_results.get('error', 'Unknown error')
-            report_content += f"❌ pluto scan failed: {error}\n"
-        
-        # Deprecated API Metrics and Audit Logs
-        report_content += "\n### Deprecated API Usage Check\n\n"
-        if deprecated_api_results.get('status') in ['success', 'partial_failure']:
-            # Metrics check results
-            metrics_check = deprecated_api_results.get('metrics_check', {})
-            report_content += "#### Metrics Check Results\n"
-            if metrics_check.get('status') == 'success':
-                deprecated_metrics = metrics_check.get('deprecated_apis', [])
-                if deprecated_metrics:
-                    report_content += "| API Path | Resource | Version | Group | Usage Count | Description |\n"
-                    report_content += "|----------|----------|---------|-------|-------------|-------------|\n"
-                    for metric in deprecated_metrics:
-                        parsed = parse_deprecated_api_metric(metric)
-                        report_content += f"| `{parsed['api_path']}` | {parsed['resource']} | {parsed['version']} | {parsed['group']} | {parsed['count']} | {parsed['description']} |\n"
-                    
-                    report_content += "\n**Raw Metrics:**\n"
-                    for metric in deprecated_metrics:
-                        report_content += f"- `{metric}`\n"
-                else:
-                    report_content += "✅ No deprecated API usage found in metrics.\n"
-            else:
-                error = metrics_check.get('error', 'Unknown error')
-                report_content += f"⚠️ Metrics check failed: {error}\n"
-            
-            # Audit logs check results
-            audit_check = deprecated_api_results.get('audit_logs_check', {})
-            report_content += "\n#### Audit Logs Check Results\n"
-            if audit_check.get('status') == 'success':
-                deprecated_logs = audit_check.get('deprecated_apis', [])
-                if deprecated_logs:
-                    report_content += f"⚠️ Found {len(deprecated_logs)} deprecated API usage entries in audit logs.\n"
-                    report_content += "Review the audit logs for detailed information.\n"
-                else:
-                    report_content += "✅ No deprecated API usage found in audit logs.\n"
-            else:
-                error = audit_check.get('error', 'Unknown error')
-                report_content += f"⚠️ Audit logs check failed: {error}\n"
-        elif deprecated_api_results.get('status') == 'not_run':
-            report_content += "⚠️ Deprecated API check was disabled in configuration.\n"
-        else:
-            error = deprecated_api_results.get('error', 'Unknown error')
-            report_content += f"❌ Deprecated API check failed: {error}\n"
-        
-        report_content += "\n---\n"
-    
-    # Add recommendations section
-    report_content += "\n## Recommendations\n\n"
-    report_content += "Based on the assessment results above:\n\n"
-    report_content += "### For clusters marked as '❌ NEEDS ATTENTION':\n"
-    report_content += "- **Address any ERROR status insights** - These must be resolved before upgrading\n"
-    report_content += "- **Update deprecated APIs found by kubent or pluto** - These are critical and will break the upgrade\n"
-    report_content += "- **Resolve any critical issues** - All blocking issues must be fixed\n\n"
-    report_content += "### For clusters marked as '⚠️ WARNING':\n"
-    report_content += "- **Review deprecated API usage** - Found in metrics but EKS Insights show PASSING for target version\n"
-    report_content += "- **Consider updating deprecated APIs** - While not immediately critical, it's good practice\n"
-    report_content += "- **Monitor during upgrade** - Watch for any issues related to deprecated API usage\n"
-    report_content += "- **Upgrade can proceed** - These are warnings, not blockers\n\n"
-    report_content += "### General recommendations:\n"
-    report_content += "1. **Test in non-production** - Validate all changes in a development environment\n"
-    report_content += "2. **Plan rollback strategy** - Ensure you can rollback if issues occur\n"
-    report_content += "3. **Monitor closely** - Watch cluster and application health during upgrade\n"
-    report_content += "4. **Update monitoring tools** - Some deprecated API usage may come from monitoring tools\n"
-    
-    with open(assessment_dir / "assessment-report.md", 'w') as f:
-        f.write(report_content)
 
 
 def parse_deprecated_api_metric(metric_line: str) -> dict:
