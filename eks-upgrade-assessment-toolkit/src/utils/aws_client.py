@@ -52,6 +52,7 @@ class AWSClient:
         self._ec2_client = None
         self._iam_client = None
         self._logs_client = None
+        self._sts_client = None
         
     @property
     def session(self) -> boto3.Session:
@@ -91,6 +92,13 @@ class AWSClient:
             self._logs_client = self.session.client('logs')
         return self._logs_client
     
+    @property
+    def sts_client(self):
+        """Get STS client."""
+        if self._sts_client is None:
+            self._sts_client = self.session.client('sts')
+        return self._sts_client
+    
     def test_connection(self) -> bool:
         """Test AWS connection and permissions."""
         try:
@@ -100,6 +108,14 @@ class AWSClient:
         except (ClientError, NoCredentialsError) as e:
             print(f"AWS connection test failed: {str(e)}")
             return False
+    
+    def get_account_id(self) -> str:
+        """Get AWS account ID."""
+        try:
+            response = self.sts_client.get_caller_identity()
+            return response['Account']
+        except ClientError as e:
+            raise Exception(f"Failed to get AWS account ID: {str(e)}")
     
     def discover_clusters(self) -> List[str]:
         """Discover all EKS clusters in the region."""
@@ -178,12 +194,40 @@ class AWSClient:
             return None
     
     def get_cluster_insights(self, cluster_name: str) -> List[Dict[str, Any]]:
-        """Get EKS cluster insights."""
+        """Get EKS cluster insights with detailed information for non-passing insights."""
         try:
             response = self.eks_client.list_insights(
                 clusterName=cluster_name
             )
-            return response.get('insights', [])
+            insights = response.get('insights', [])
+            
+            # For each non-passing insight, fetch detailed information
+            enhanced_insights = []
+            for insight in insights:
+                insight_status = insight.get('insightStatus', {}).get('status', '')
+                
+                # If insight is not passing, fetch detailed information
+                if insight_status != 'PASSING':
+                    try:
+                        insight_id = insight.get('id')
+                        if insight_id:
+                            detailed_response = self.eks_client.describe_insight(
+                                clusterName=cluster_name,
+                                id=insight_id
+                            )
+                            detailed_insight = detailed_response.get('insight', {})
+                            
+                            # Add the detailed insight information to the original insight
+                            insight['insight'] = detailed_insight
+                            
+                    except ClientError as e:
+                        print(f"Failed to get detailed insight {insight.get('id', 'unknown')} for {cluster_name}: {str(e)}")
+                        # Continue without detailed info if describe_insight fails
+                
+                enhanced_insights.append(insight)
+            
+            return enhanced_insights
+            
         except ClientError as e:
             print(f"Failed to get cluster insights for {cluster_name}: {str(e)}")
             return []

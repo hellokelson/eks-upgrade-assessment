@@ -270,6 +270,281 @@
             background: #c82333;
         }
 
+        .api-deprecation-section, .addon-upgrade-section {
+            padding: 1rem 0;
+        }
+
+        .deprecation-source, .current-addons, .upgrade-insights {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007dbc;
+        }
+
+        .deprecation-source h5, .current-addons h5, .upgrade-insights h5 {
+            margin-bottom: 1rem;
+            color: #232f3e;
+            font-size: 1.1rem;
+        }
+
+        .insight-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .insight-body p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .insight-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-deprecated {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .api-deprecation-section .detail-table th {
+            background: #dc3545;
+            color: white;
+        }
+
+        .addon-upgrade-section .detail-table th {
+            background: #28a745;
+            color: white;
+        }
+
+        .eks-insights-section, .api-scans-section {
+            padding: 1rem 0;
+        }
+
+        .scan-source {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007dbc;
+        }
+
+        .scan-source h5 {
+            margin-bottom: 1rem;
+            color: #232f3e;
+            font-size: 1.1rem;
+        }
+
+        .scan-success {
+            padding: 1rem;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+            margin: 1rem 0;
+        }
+
+        .scan-status, .scan-count {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .insight-row.non-passing {
+            background-color: #fff3cd;
+        }
+
+        .insight-details-row {
+            background-color: #f8f9fa;
+        }
+
+        .insight-details-content {
+            padding: 1.5rem;
+            border-top: 2px solid #007dbc;
+        }
+
+        .insight-detailed-info {
+            background: white;
+            border-radius: 4px;
+            padding: 1rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .detail-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .detail-section h6 {
+            color: #232f3e;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-text {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 4px solid #007dbc;
+            margin: 0;
+        }
+
+        .additional-info-list, .resources-list, .deprecation-list, .addon-compatibility-list {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .additional-info-list li, .resources-list li, .deprecation-list li, .addon-compatibility-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .additional-info-list a {
+            color: #007dbc;
+            text-decoration: none;
+        }
+
+        .additional-info-list a:hover {
+            text-decoration: underline;
+        }
+
+        .resource-item, .deprecation-item, .compatibility-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-item:last-child, .deprecation-item:last-child, .compatibility-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .resource-uri, .resource-status, .resource-property {
+            margin-bottom: 0.25rem;
+        }
+
+        .resource-uri:last-child, .resource-status:last-child, .resource-property:last-child {
+            margin-bottom: 0;
+        }
+
+        .resource-uri {
+            font-family: monospace;
+            font-size: 0.9rem;
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+        }
+
+        .detail-btn {
+            background: #007dbc;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .detail-btn:hover {
+            background: #0056b3;
+        }
+
+        .detail-icon {
+            font-size: 0.7rem;
+            transition: transform 0.2s ease;
+        }
+
+        .insight-name {
+            cursor: help;
+            position: relative;
+            border-bottom: 1px dotted #007dbc;
+        }
+
+        .insight-name:hover {
+            color: #007dbc;
+        }
+
+        .insight-name[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #232f3e;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: normal;
+            white-space: normal;
+            width: 300px;
+            max-width: 300px;
+            word-wrap: break-word;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            margin-bottom: 5px;
+        }
+
+        .insight-name[data-tooltip]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            border: 5px solid transparent;
+            border-top-color: #232f3e;
+            z-index: 1000;
+        }
+
+        .analysis-cell {
+            max-width: 250px;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+        }
+
+        .section-divider {
+            margin: 2rem 0 1.5rem 0;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            border-left: 4px solid #007dbc;
+        }
+
+        .section-divider.upgrade-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left-color: #fd7e14;
+        }
+
+        .section-divider h4 {
+            margin: 0;
+            color: #232f3e;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .upgrade-section h4 {
+            color: #856404;
+        }
+
         .generation-info {
             background: #e7f3ff;
             padding: 1rem;
@@ -510,6 +785,10 @@
                     </div>
                 </div>
 
+                <!-- Cluster Infrastructure Section -->
+                <div class="section-divider">
+                    <h4>🏗️ Cluster Infrastructure</h4>
+                </div>
                 <div class="details-tabs">
                     <button class="tab-button active" onclick="showTab('${cluster.cluster_name}', 'nodegroups')">
                         Node Groups (${cluster.node_groups ? cluster.node_groups.length : 0})
@@ -539,6 +818,27 @@
 
                 <div id="tab-${cluster.cluster_name}-fargate" class="tab-content">
                     ${generateFargateTable(cluster.fargate_profiles)}
+                </div>
+
+                <!-- Upgrade Assessment Section -->
+                <div class="section-divider upgrade-section">
+                    <h4>🚀 Upgrade Assessment</h4>
+                </div>
+                <div class="details-tabs">
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'eks-insights')">
+                        EKS Insights
+                    </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'api-scans')">
+                        API Deprecation Scans
+                    </button>
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-eks-insights" class="tab-content">
+                    ${generateEksInsightsTab(cluster.cluster_name)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-api-scans" class="tab-content">
+                    ${generateApiScansTab(cluster.cluster_name)}
                 </div>
             `;
         }
@@ -688,6 +988,183 @@
             return html;
         }
 
+        function generateEksInsightsTab(clusterName) {
+            const assessmentCluster = assessmentData[clusterName];
+            if (!assessmentCluster || !assessmentCluster.assessment_results) {
+                return '<div class="no-data">No assessment data available</div>';
+            }
+
+            const insights = assessmentCluster.assessment_results.insights || {};
+            const findings = insights.findings || [];
+
+            let html = `
+                <div class="eks-insights-section">
+                    <h4>📊 EKS Insights Analysis</h4>
+                    <p>AWS EKS service insights for cluster upgrade readiness</p>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>Total Insights</strong>
+                            ${insights.count || 0}
+                        </div>
+                        <div class="info-item">
+                            <strong>Critical Issues</strong>
+                            ${insights.critical_issues || 0}
+                        </div>
+                        <div class="info-item">
+                            <strong>Status</strong>
+                            <span class="status-badge ${insights.status === 'success' ? 'status-active' : 'status-warning'}">
+                                ${insights.status || 'Unknown'}
+                            </span>
+                        </div>
+                    </div>
+            `;
+
+            if (findings.length > 0) {
+                html += '<h5>📋 EKS Insights Analysis</h5>';
+                html += '<table class="detail-table"><thead><tr><th>Insight</th><th>Category</th><th>Target Version</th><th>Status</th><th>Analysis</th><th>Last Updated</th><th>Actions</th></tr></thead><tbody>';
+                
+                findings.forEach((insight, index) => {
+                    const statusClass = insight.insightStatus?.status === 'ERROR' ? 'status-error' : 
+                                       insight.insightStatus?.status === 'WARNING' ? 'status-warning' : 
+                                       insight.insightStatus?.status === 'UNKNOWN' ? 'status-warning' :
+                                       'status-active';
+                    
+                    const isNonPassing = insight.insightStatus?.status !== 'PASSING';
+                    const hasDetailedInfo = insight.insight && (insight.insight.recommendation || insight.insight.additionalInfo || insight.insight.resources);
+                    
+                    // Format last updated time
+                    const lastUpdated = insight.lastRefreshTime ? 
+                        new Date(insight.lastRefreshTime * 1000).toLocaleDateString() : 'N/A';
+                    
+                    html += `
+                        <tr class="insight-row ${isNonPassing ? 'non-passing' : ''}" data-insight-index="${index}">
+                            <td>
+                                <strong class="insight-name" title="${insight.description || 'No description available'}" data-tooltip="${insight.description || 'No description available'}">
+                                    ${insight.name || 'N/A'}
+                                </strong>
+                            </td>
+                            <td>${insight.category || 'N/A'}</td>
+                            <td>${insight.kubernetesVersion || 'N/A'}</td>
+                            <td><span class="status-badge ${statusClass}">${insight.insightStatus?.status || 'Unknown'}</span></td>
+                            <td class="analysis-cell">${insight.insightStatus?.reason || 'N/A'}</td>
+                            <td>${lastUpdated}</td>
+                            <td>
+                                ${isNonPassing && hasDetailedInfo ? 
+                                    `<button class="detail-btn" onclick="toggleInsightDetails('${clusterName}', ${index})">
+                                        <span class="detail-icon" id="detail-icon-${index}">▶</span> Details
+                                    </button>` : 
+                                    '-'
+                                }
+                            </td>
+                        </tr>
+                    `;
+                    
+                    // Add detailed row for non-passing insights
+                    if (isNonPassing && hasDetailedInfo) {
+                        html += `
+                            <tr class="insight-details-row" id="insight-details-${index}" style="display: none;">
+                                <td colspan="7">
+                                    <div class="insight-details-content">
+                                        ${generateInsightDetails(insight.insight)}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+                html += '</tbody></table>';
+            } else {
+                html += '<div class="no-data">No EKS insights available</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function generateApiScansTab(clusterName) {
+            const assessmentCluster = assessmentData[clusterName];
+            if (!assessmentCluster || !assessmentCluster.assessment_results) {
+                return '<div class="no-data">No assessment data available</div>';
+            }
+
+            const results = assessmentCluster.assessment_results;
+            let html = `
+                <div class="api-scans-section">
+                    <h4>🔍 API Deprecation Scans</h4>
+                    <p>Kubent and Pluto scan results for deprecated Kubernetes APIs</p>
+            `;
+
+            // Kubent section
+            html += '<div class="scan-source">';
+            html += '<h5>🔍 Kubent Scan Results</h5>';
+            html += '<p>Kubernetes deprecated API scanner - checks for deprecated APIs in cluster resources</p>';
+            
+            const kubent = results.deprecated_apis?.kubent || {};
+            if (kubent.status === 'success') {
+                if (kubent.apis && kubent.apis.length > 0) {
+                    html += '<table class="detail-table"><thead><tr><th>API</th><th>Version</th><th>Kind</th><th>Deprecated In</th><th>Removed In</th><th>Resource</th></tr></thead><tbody>';
+                    kubent.apis.forEach(api => {
+                        html += `
+                            <tr>
+                                <td><strong>${api.api || 'N/A'}</strong></td>
+                                <td>${api.version || 'N/A'}</td>
+                                <td>${api.kind || 'N/A'}</td>
+                                <td>${api.deprecated_in || 'N/A'}</td>
+                                <td><span class="status-badge status-error">${api.removed_in || 'N/A'}</span></td>
+                                <td>${api.resource || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html += '<div class="scan-success">✅ No deprecated APIs found by Kubent scan</div>';
+                }
+            } else {
+                html += `<div class="scan-status">Kubent scan status: <span class="status-badge ${kubent.status === 'success' ? 'status-active' : 'status-warning'}">${kubent.status || 'not run'}</span></div>`;
+                if (kubent.count !== undefined) {
+                    html += `<div class="scan-count">Deprecated APIs found: ${kubent.count}</div>`;
+                }
+            }
+            html += '</div>';
+
+            // Pluto section
+            html += '<div class="scan-source">';
+            html += '<h5>🛡️ Pluto Scan Results</h5>';
+            html += '<p>Helm chart deprecated API scanner - checks for deprecated APIs in Helm releases</p>';
+            
+            const pluto = results.deprecated_apis?.pluto || {};
+            if (pluto.status === 'success') {
+                if (pluto.apis && pluto.apis.length > 0) {
+                    html += '<table class="detail-table"><thead><tr><th>API</th><th>Version</th><th>Kind</th><th>Replacement</th><th>Removed In</th><th>Component</th></tr></thead><tbody>';
+                    pluto.apis.forEach(api => {
+                        html += `
+                            <tr>
+                                <td><strong>${api.api || 'N/A'}</strong></td>
+                                <td>${api.version || 'N/A'}</td>
+                                <td>${api.kind || 'N/A'}</td>
+                                <td>${api.replacement || 'N/A'}</td>
+                                <td><span class="status-badge status-warning">${api.removed_in || 'N/A'}</span></td>
+                                <td>${api.component || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html += '<div class="scan-success">✅ No deprecated APIs found by Pluto scan</div>';
+                }
+            } else {
+                html += `<div class="scan-status">Pluto scan status: <span class="status-badge ${pluto.status === 'success' ? 'status-active' : 'status-warning'}">${pluto.status || 'not run'}</span></div>`;
+                if (pluto.count !== undefined) {
+                    html += `<div class="scan-count">Deprecated APIs found: ${pluto.count}</div>`;
+                }
+            }
+            html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
         function toggleClusterDetails(clusterName, row) {
             const detailsRow = document.querySelector(`[data-cluster-details="${clusterName}"]`);
             
@@ -744,6 +1221,142 @@
             if (statusLower.includes('warning') || statusLower.includes('updating')) return 'status-warning';
             if (statusLower.includes('error') || statusLower.includes('failed')) return 'status-error';
             return 'status-active';
+        }
+
+        function generateInsightDetails(insightData) {
+            if (!insightData) return '<div class="no-data">No detailed information available</div>';
+            
+            let html = '<div class="insight-detailed-info">';
+            
+            // Recommendation section
+            if (insightData.recommendation) {
+                html += `
+                    <div class="detail-section">
+                        <h6>💡 Recommendation</h6>
+                        <p class="recommendation-text">${insightData.recommendation}</p>
+                    </div>
+                `;
+            }
+            
+            // Additional Info section
+            if (insightData.additionalInfo && Object.keys(insightData.additionalInfo).length > 0) {
+                html += `
+                    <div class="detail-section">
+                        <h6>📚 Additional Information</h6>
+                        <ul class="additional-info-list">
+                `;
+                
+                Object.entries(insightData.additionalInfo).forEach(([key, value]) => {
+                    if (value && value.startsWith('http')) {
+                        html += `<li><strong>${key}:</strong> <a href="${value}" target="_blank" rel="noopener">${value}</a></li>`;
+                    } else {
+                        html += `<li><strong>${key}:</strong> ${value}</li>`;
+                    }
+                });
+                
+                html += '</ul></div>';
+            }
+            
+            // Resources section
+            if (insightData.resources && insightData.resources.length > 0) {
+                html += `
+                    <div class="detail-section">
+                        <h6>🔧 Affected Resources</h6>
+                        <div class="resources-list">
+                `;
+                
+                insightData.resources.forEach(resource => {
+                    if (typeof resource === 'object') {
+                        // Handle resource objects
+                        html += '<div class="resource-item">';
+                        
+                        if (resource.kubernetesResourceUri) {
+                            html += `<div class="resource-uri"><strong>Resource:</strong> ${resource.kubernetesResourceUri}</div>`;
+                        }
+                        
+                        if (resource.insightStatus) {
+                            const statusClass = resource.insightStatus.status === 'ERROR' ? 'status-error' : 
+                                               resource.insightStatus.status === 'WARNING' ? 'status-warning' : 'status-active';
+                            html += `<div class="resource-status"><strong>Status:</strong> <span class="status-badge ${statusClass}">${resource.insightStatus.status}</span></div>`;
+                        }
+                        
+                        // Display any other properties
+                        Object.keys(resource).forEach(key => {
+                            if (key !== 'kubernetesResourceUri' && key !== 'insightStatus') {
+                                html += `<div class="resource-property"><strong>${key}:</strong> ${resource[key]}</div>`;
+                            }
+                        });
+                        
+                        html += '</div>';
+                    } else {
+                        // Handle string resources
+                        html += `<div class="resource-item">${resource}</div>`;
+                    }
+                });
+                
+                html += '</div></div>';
+            }
+            
+            // Category Specific Summary
+            if (insightData.categorySpecificSummary) {
+                const summary = insightData.categorySpecificSummary;
+                
+                if (summary.deprecationDetails && summary.deprecationDetails.length > 0) {
+                    html += `
+                        <div class="detail-section">
+                            <h6>⚠️ Deprecation Details</h6>
+                            <div class="deprecation-list">
+                    `;
+                    summary.deprecationDetails.forEach(detail => {
+                        if (typeof detail === 'object') {
+                            html += '<div class="deprecation-item">';
+                            Object.keys(detail).forEach(key => {
+                                html += `<div><strong>${key}:</strong> ${detail[key]}</div>`;
+                            });
+                            html += '</div>';
+                        } else {
+                            html += `<div class="deprecation-item">${detail}</div>`;
+                        }
+                    });
+                    html += '</div></div>';
+                }
+                
+                if (summary.addonCompatibilityDetails && summary.addonCompatibilityDetails.length > 0) {
+                    html += `
+                        <div class="detail-section">
+                            <h6>🔌 Addon Compatibility Details</h6>
+                            <div class="addon-compatibility-list">
+                    `;
+                    summary.addonCompatibilityDetails.forEach(detail => {
+                        if (typeof detail === 'object') {
+                            html += '<div class="compatibility-item">';
+                            Object.keys(detail).forEach(key => {
+                                html += `<div><strong>${key}:</strong> ${detail[key]}</div>`;
+                            });
+                            html += '</div>';
+                        } else {
+                            html += `<div class="compatibility-item">${detail}</div>`;
+                        }
+                    });
+                    html += '</div></div>';
+                }
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
+        function toggleInsightDetails(clusterName, insightIndex) {
+            const detailsRow = document.getElementById(`insight-details-${insightIndex}`);
+            const icon = document.getElementById(`detail-icon-${insightIndex}`);
+            
+            if (detailsRow.style.display === 'none') {
+                detailsRow.style.display = 'table-row';
+                icon.textContent = '▼';
+            } else {
+                detailsRow.style.display = 'none';
+                icon.textContent = '▶';
+            }
         }
     </script>
 </body>

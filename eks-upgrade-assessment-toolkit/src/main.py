@@ -91,7 +91,7 @@ def install_tools():
 @click.option('--config', '-c', default='eks-upgrade-config.yaml',
               help='Path to configuration file')
 @click.option('--output-dir', '-o', default='eks-upgrade-assessment',
-              help='Output directory for generated assessment reports')
+              help='Output directory for generated assessment reports (default: assessment-reports/{account_id}-{region}-{datetime}-assessment)')
 def analyze(config: str, output_dir: str):
     """Analyze EKS clusters and generate assessment reports."""
     try:
@@ -126,6 +126,28 @@ def analyze(config: str, output_dir: str):
             sys.exit(1)
         
         click.echo("✅ AWS connection successful")
+        
+        # Generate dynamic output directory name: assessment-reports/{account_id}-{region}-{datetime}-assessment
+        try:
+            if output_dir == 'eks-upgrade-assessment':  # Only change if using default
+                account_id = aws_client.get_account_id()
+                region = upgrade_config.aws_configuration.region
+                
+                # Generate timestamp for directory name
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+                
+                # Create dynamic output directory name inside assessment-reports
+                dynamic_dir_name = f"{account_id}-{region}-{timestamp}-assessment"
+                dynamic_output_dir = f"assessment-reports/{dynamic_dir_name}"
+                click.echo(f"📁 Using dynamic output directory: {dynamic_output_dir}")
+                output_dir = dynamic_output_dir
+            else:
+                click.echo(f"📁 Using specified output directory: {output_dir}")
+                
+        except Exception as e:
+            click.echo(f"⚠️  Could not get AWS account info for dynamic naming: {str(e)}")
+            click.echo(f"📁 Using default output directory: {output_dir}")
         
         # Discover clusters if not specified
         cluster_names = upgrade_config.cluster_info.cluster_names
@@ -258,8 +280,8 @@ def analyze(config: str, output_dir: str):
         click.echo("\nNext steps:")
         click.echo(f"1. Review the generated assessment reports in {output_dir}")
         click.echo("2. Open the web dashboard for interactive viewing:")
-        click.echo(f"   - Web Dashboard: {output_dir}/assessment-reports/web-ui/index.html")
-        click.echo(f"   - Assessment Data: {output_dir}/assessment-reports/clusters-metadata.json")
+        click.echo(f"   - Web Dashboard: {output_dir}/web-ui/index.html")
+        click.echo(f"   - Assessment Data: {output_dir}/clusters-metadata.json")
         click.echo("3. Analyze the risk assessment and compatibility findings")
         click.echo("4. Plan your upgrade strategy based on the assessment results")
         
@@ -870,8 +892,8 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
     try:
         from jinja2 import Environment, FileSystemLoader
         
-        # Create web UI directory inside assessment-reports
-        web_ui_dir = Path(output_dir) / "assessment-reports" / "web-ui"
+        # Create web UI directory (output_dir now includes full path)
+        web_ui_dir = Path(output_dir) / "web-ui"
         web_ui_dir.mkdir(parents=True, exist_ok=True)
         
         # Step 1: Create assessment data for the web UI (simplified format)
@@ -920,7 +942,7 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
             json.dump(assessment_data, f, indent=2, default=str)
         
         # Step 2.1: Copy clusters-metadata.json to web-ui directory for direct access
-        clusters_metadata_source = Path(output_dir) / "assessment-reports" / "clusters-metadata.json"
+        clusters_metadata_source = Path(output_dir) / "clusters-metadata.json"  # output_dir now includes full path
         clusters_metadata_dest = web_ui_dir / "clusters-metadata.json"
         if clusters_metadata_source.exists():
             import shutil
@@ -1283,7 +1305,7 @@ def get_status_emoji(status: str) -> str:
 
 def generate_assessment_reports(config: EKSUpgradeConfig, cluster_analysis: dict, output_dir: str):
     """Generate assessment reports."""
-    assessment_dir = Path(output_dir, "assessment-reports")
+    assessment_dir = Path(output_dir)  # output_dir now includes the full path
     
     # Generate assessment report with table format
     report_content = "# Pre-upgrade Assessment Report\n\n"
@@ -2095,11 +2117,11 @@ def get_status_emoji(status: str) -> str:
 
 def generate_documentation(config: EKSUpgradeConfig, cluster_analysis: dict, output_dir: str):
     """Generate assessment documentation based on analysis."""
-    # Create directory structure for assessment only
+    # Create directory structure (output_dir now includes the full path)
     dirs_to_create = [
-        "assessment-reports",
         "cluster-metadata", 
-        "scripts"
+        "scripts",
+        "web-ui"
     ]
     
     for dir_name in dirs_to_create:
