@@ -2,6 +2,11 @@
 
 A comprehensive toolkit to assess Amazon EKS cluster readiness for upgrades following AWS best practices. This toolkit provides automated analysis, interactive reports, and detailed addon compatibility checking to ensure smooth EKS upgrades.
 
+
+https://github.com/user-attachments/assets/78916f0f-043c-45fc-b4a7-b32183174ded
+
+
+
 ## 📋 **Table of Contents**
 - [Quick Start](#-quick-start)
 - [Key Features](#-key-features)
