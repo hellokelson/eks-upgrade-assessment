@@ -1,0 +1,16 @@
+apiVersion: eks.aws.amazon.com/v1
+kind: Addon
+metadata:
+  name: kube-proxy
+  clusterName: leader-karpenter-0-32-test
+spec:
+  addonName: kube-proxy
+  clusterName: leader-karpenter-0-32-test
+  status: ACTIVE
+  addonVersion: v1.27.6-eksbuild.2
+  health:
+    issues: []
+  addonArn: arn:aws:eks:us-east-1:629244530291:addon/leader-karpenter-0-32-test/kube-proxy/eacb6042-7deb-ebf2-12c2-f811ed2124c4
+  createdAt: 2025-05-12 02:04:23.160000+08:00
+  modifiedAt: 2025-05-12 02:04:29.750000+08:00
+  tags: {}

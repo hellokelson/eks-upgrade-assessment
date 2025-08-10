@@ -7,6 +7,12 @@ https://github.com/user-attachments/assets/78916f0f-043c-45fc-b4a7-b32183174ded
 
 
 
+## ⚠️ **Important Notice / 重要提示**
+
+**English**: This tool is a **demo** designed to help you collect cluster information and assess EKS upgrade readiness. It is **NOT intended for final decision-making** and you should **NOT depend entirely on this tool**. For any uncertainties or detailed guidance, please refer to the official Kubernetes and Amazon EKS documentation before proceeding with upgrades.
+
+**中文**: 此工具是一个**演示版本**，旨在帮助您收集集群信息并评估EKS升级准备情况。它**不适用于最终决策**，您**不应完全依赖此工具**。如有任何疑问或需要详细指导，请在进行升级前参考官方Kubernetes和Amazon EKS文档。
+
 ## 📋 **Table of Contents**
 - [Quick Start](#-quick-start)
 - [Key Features](#-key-features)

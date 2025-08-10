@@ -1,0 +1,19 @@
+apiVersion: eks.aws.amazon.com/v1
+kind: NodeGroup
+metadata:
+  name: cpum-amd64-sheinspot-common
+  clusterName: leader-karpenter-0-32-test
+spec:
+  status: DEGRADED
+  capacityType: SPOT
+  instanceTypes:
+  - m5.large
+  - m5.xlarge
+  amiType: AL2_x86_64
+  nodeRole: arn:aws:iam::629244530291:role/leader-karpenter-0-32-test-nodegroup-role
+  scalingConfig:
+    minSize: 1
+    maxSize: 1
+    desiredSize: 1
+  version: '1.27'
+  releaseVersion: 1.27.16-20250715

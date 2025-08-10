@@ -1,0 +1,88 @@
+apiVersion: v1
+items:
+- apiVersion: karpenter.k8s.aws/v1beta1
+  kind: EC2NodeClass
+  metadata:
+    annotations:
+      karpenter.k8s.aws/ec2nodeclass-hash: '14482182380309942808'
+      karpenter.k8s.aws/ec2nodeclass-hash-version: v1
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"karpenter.k8s.aws/v1beta1","kind":"EC2NodeClass","metadata":{"annotations":{},"name":"default-nodeclass"},"spec":{"amiFamily":"AL2","metadataOptions":{"httpEndpoint":"enabled","httpProtocolIPv6":"disabled","httpPutResponseHopLimit":2,"httpTokens":"required"},"role":"leader-karpenter-0-32-test-nodegroup-role","securityGroupSelectorTerms":[{"id":"sg-0c3dd11e5bee8881e"}],"subnetSelectorTerms":[{"id":"subnet-0970aae133676c3e1"},{"id":"subnet-01a58b16d63cb0432"}],"tags":{"Name":"leader-karpenter-0-32-test-node","karpenter.sh/discovery":"leader-karpenter-0-32-test"}}}
+
+        '
+    creationTimestamp: '2025-07-28T05:06:11Z'
+    finalizers:
+    - karpenter.k8s.aws/termination
+    generation: 1
+    name: default-nodeclass
+    resourceVersion: '17528914'
+    uid: ad71a260-6dbf-4003-a8c1-1c261cad14f5
+  spec:
+    amiFamily: AL2
+    metadataOptions:
+      httpEndpoint: enabled
+      httpProtocolIPv6: disabled
+      httpPutResponseHopLimit: 2
+      httpTokens: required
+    role: leader-karpenter-0-32-test-nodegroup-role
+    securityGroupSelectorTerms:
+    - id: sg-0c3dd11e5bee8881e
+    subnetSelectorTerms:
+    - id: subnet-0970aae133676c3e1
+    - id: subnet-01a58b16d63cb0432
+    tags:
+      Name: leader-karpenter-0-32-test-node
+      karpenter.sh/discovery: leader-karpenter-0-32-test
+  status:
+    amis:
+    - id: ami-018674e478ad64895
+      name: amazon-eks-arm64-node-1.27-v20250715
+      requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - arm64
+      - key: karpenter.k8s.aws/instance-gpu-count
+        operator: DoesNotExist
+      - key: karpenter.k8s.aws/instance-accelerator-count
+        operator: DoesNotExist
+    - id: ami-03d2560f382aa40de
+      name: amazon-eks-node-1.27-v20250715
+      requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: karpenter.k8s.aws/instance-gpu-count
+        operator: DoesNotExist
+      - key: karpenter.k8s.aws/instance-accelerator-count
+        operator: DoesNotExist
+    - id: ami-0dd4ead49c6d65678
+      name: amazon-eks-gpu-node-1.27-v20250715
+      requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: karpenter.k8s.aws/instance-gpu-count
+        operator: Exists
+    - id: ami-0dd4ead49c6d65678
+      name: amazon-eks-gpu-node-1.27-v20250715
+      requirements:
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+      - key: karpenter.k8s.aws/instance-accelerator-count
+        operator: Exists
+    instanceProfile: leader-karpenter-0-32-test_18277957473212975057
+    securityGroups:
+    - id: sg-0c3dd11e5bee8881e
+      name: lead-karpenter-sg
+    subnets:
+    - id: subnet-01a58b16d63cb0432
+      zone: us-east-1f
+    - id: subnet-0970aae133676c3e1
+      zone: us-east-1a
+kind: List
+metadata:
+  resourceVersion: ''

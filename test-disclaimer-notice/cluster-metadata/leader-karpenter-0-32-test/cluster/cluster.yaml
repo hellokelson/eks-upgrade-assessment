@@ -1,0 +1,46 @@
+apiVersion: eks.aws.amazon.com/v1
+kind: Cluster
+metadata:
+  name: leader-karpenter-0-32-test
+  arn: arn:aws:eks:us-east-1:629244530291:cluster/leader-karpenter-0-32-test
+  tags:
+    aws:cloudformation:stack-name: eksctl-leader-karpenter-0-32-test-cluster
+    alpha.eksctl.io/cluster-name: leader-karpenter-0-32-test
+    karpenter.sh/discovery: leader-karpenter-0-32-test
+    aws:cloudformation:stack-id: arn:aws:cloudformation:us-east-1:629244530291:stack/eksctl-leader-karpenter-0-32-test-cluster/39473930-2e91-11f0-9f1e-0e72b5009105
+    eksctl.cluster.k8s.io/v1alpha1/cluster-name: leader-karpenter-0-32-test
+    alpha.eksctl.io/cluster-oidc-enabled: 'true'
+    aws:cloudformation:logical-id: ControlPlane
+    alpha.eksctl.io/eksctl-version: 0.207.0
+    Name: eksctl-leader-karpenter-0-32-test-cluster/ControlPlane
+spec:
+  version: '1.27'
+  platformVersion: eks.50
+  status: ACTIVE
+  endpoint: https://990822A953C4908B3F32546F8B7F401B.gr7.us-east-1.eks.amazonaws.com
+  roleArn: arn:aws:iam::629244530291:role/eksctl-leader-karpenter-0-32-test-clust-ServiceRole-oTv1FsjNUdNe
+  vpcConfig:
+    subnetIds:
+    - subnet-0970aae133676c3e1
+    - subnet-01a58b16d63cb0432
+    securityGroupIds:
+    - sg-0d254602a5b46be00
+    clusterSecurityGroupId: sg-043d218dedab50c77
+    vpcId: vpc-00a1a3e59df7931d7
+    endpointPublicAccess: true
+    endpointPrivateAccess: false
+    publicAccessCidrs:
+    - 0.0.0.0/0
+  logging:
+    clusterLogging:
+    - types:
+      - api
+      - audit
+      - authenticator
+      - controllerManager
+      - scheduler
+      enabled: false
+  identity:
+    oidc:
+      issuer: https://oidc.eks.us-east-1.amazonaws.com/id/990822A953C4908B3F32546F8B7F401B
+  createdAt: '2025-05-12T01:56:34.059000+08:00'

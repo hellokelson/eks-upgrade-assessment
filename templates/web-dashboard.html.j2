@@ -37,6 +37,61 @@
             opacity: 0.9;
         }
 
+        /* Important Notice Styles */
+        .important-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            margin: 1rem auto;
+            max-width: 1200px;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+        }
+
+        .notice-content {
+            padding: 1.5rem;
+        }
+
+        .notice-content h3 {
+            color: #856404;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        .notice-text p {
+            margin-bottom: 1rem;
+            color: #856404;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .notice-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .notice-text strong {
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .important-notice {
+                margin: 1rem;
+                border-radius: 6px;
+            }
+            
+            .notice-content {
+                padding: 1rem;
+            }
+            
+            .notice-content h3 {
+                font-size: 1.1rem;
+            }
+            
+            .notice-text p {
+                font-size: 0.9rem;
+            }
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -848,6 +903,17 @@
     <div class="header">
         <h1>🚀 EKS Upgrade Assessment Dashboard</h1>
         <p>Interactive analysis of your EKS clusters for upgrade readiness</p>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="important-notice">
+        <div class="notice-content">
+            <h3>⚠️ Important Notice / 重要提示</h3>
+            <div class="notice-text">
+                <p><strong>English:</strong> This tool is a <strong>demo</strong> designed to help you collect cluster information and assess EKS upgrade readiness. It is <strong>NOT intended for final decision-making</strong> and you should <strong>NOT depend entirely on this tool</strong>. For any uncertainties or detailed guidance, please refer to the official Kubernetes and Amazon EKS documentation before proceeding with upgrades.</p>
+                <p><strong>中文:</strong> 此工具是一个<strong>演示版本</strong>，旨在帮助您收集集群信息并评估EKS升级准备情况。它<strong>不适用于最终决策</strong>，您<strong>不应完全依赖此工具</strong>。如有任何疑问或需要详细指导，请在进行升级前参考官方Kubernetes和Amazon EKS文档。</p>
+            </div>
+        </div>
     </div>
 
     <div class="container">
