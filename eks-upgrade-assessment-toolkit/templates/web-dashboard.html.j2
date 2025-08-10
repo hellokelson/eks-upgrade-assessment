@@ -576,6 +576,272 @@
                 min-width: 120px;
             }
         }
+
+        /* Addon Compatibility Styles */
+        .addon-upgrade-section {
+            padding: 1rem;
+        }
+
+        .upgrade-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .version-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .version-label {
+            color: #6c757d;
+        }
+
+        .version-arrow {
+            color: #007bff;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .upgrade-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .upgrade-status.upgrade-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .upgrade-status.upgrade-needed {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .addon-summary {
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-item.stat-pass {
+            border-color: #28a745;
+        }
+
+        .stat-item.stat-warning {
+            border-color: #ffc107;
+        }
+
+        .stat-item.stat-error {
+            border-color: #dc3545;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-pass .stat-value {
+            color: #28a745;
+        }
+
+        .stat-warning .stat-value {
+            color: #ffc107;
+        }
+
+        .stat-error .stat-value {
+            color: #dc3545;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .blocking-issues {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .blocking-issues h5 {
+            color: #721c24;
+            margin-bottom: 1rem;
+        }
+
+        .issues-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .issue-item {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .issue-action {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        .addon-table-container {
+            margin-top: 1.5rem;
+        }
+
+        .addon-table-container h5 {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .addon-compatibility-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .addon-compatibility-table th {
+            background: #f8f9fa;
+            padding: 1rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .addon-compatibility-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        .addon-row.status-pass {
+            background: #f8fff9;
+        }
+
+        .addon-row.status-warning {
+            background: #fffbf0;
+        }
+
+        .addon-row.status-error {
+            background: #fff5f5;
+        }
+
+        .addon-row.status-unknown {
+            background: #f8f9fa;
+        }
+
+        .addon-type {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .version-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .validation-cell {
+            text-align: center;
+        }
+
+        .validation-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .validation-badge.valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .validation-badge.invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-cell {
+            max-width: 300px;
+        }
+
+        .action-text {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .addon-message {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .info-text {
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .upgrade-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .version-info {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .addon-compatibility-table {
+                font-size: 0.8rem;
+            }
+
+            .addon-compatibility-table th,
+            .addon-compatibility-table td {
+                padding: 0.5rem 0.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -831,6 +1097,9 @@
                     <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'api-scans')">
                         API Deprecation Scans
                     </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'addon-upgrade')">
+                        🔧 Addon Compatibility
+                    </button>
                 </div>
 
                 <div id="tab-${cluster.cluster_name}-eks-insights" class="tab-content">
@@ -839,6 +1108,10 @@
 
                 <div id="tab-${cluster.cluster_name}-api-scans" class="tab-content">
                     ${generateApiScansTab(cluster.cluster_name)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-addon-upgrade" class="tab-content">
+                    ${generateAddonUpgradeTab(cluster.cluster_name)}
                 </div>
             `;
         }
@@ -1160,6 +1433,151 @@
                 }
             }
             html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function generateAddonUpgradeTab(clusterName) {
+            // Load addon compatibility data from addon-compatibility.json
+            let addonCompatData = null;
+            
+            // Try to get addon compatibility data from the assessment results
+            const assessmentCluster = assessmentData[clusterName];
+            if (assessmentCluster && assessmentCluster.assessment_results && assessmentCluster.assessment_results.addon_compatibility) {
+                addonCompatData = assessmentCluster.assessment_results.addon_compatibility;
+            }
+            
+            if (!addonCompatData) {
+                return `
+                    <div class="addon-upgrade-section">
+                        <h4>🔧 Addon Compatibility Analysis</h4>
+                        <div class="no-data">No addon compatibility data available for this cluster</div>
+                        <p class="info-text">Run the assessment with addon compatibility analysis enabled to see addon upgrade requirements.</p>
+                    </div>
+                `;
+            }
+
+            const currentEks = addonCompatData.current_eks_version || 'Unknown';
+            const targetEks = addonCompatData.target_eks_version || 'Unknown';
+            const summary = addonCompatData.summary || {};
+            const addonAnalysis = addonCompatData.addon_analysis || [];
+            const upgradeRequired = addonCompatData.upgrade_required || false;
+            const blockingIssues = addonCompatData.blocking_issues || [];
+
+            let html = `
+                <div class="addon-upgrade-section">
+                    <h4>🔧 Addon Compatibility Analysis</h4>
+                    <div class="upgrade-info">
+                        <div class="version-info">
+                            <span class="version-label">Current EKS:</span> <strong>${currentEks}</strong>
+                            <span class="version-arrow">→</span>
+                            <span class="version-label">Target EKS:</span> <strong>${targetEks}</strong>
+                        </div>
+                        <div class="upgrade-status ${upgradeRequired ? 'upgrade-needed' : 'upgrade-ready'}">
+                            ${upgradeRequired ? '⚠️ Addon upgrades required' : '✅ All addons compatible'}
+                        </div>
+                    </div>
+
+                    <div class="addon-summary">
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${summary.total_addons || 0}</div>
+                                <div class="stat-label">Total Addons</div>
+                            </div>
+                            <div class="stat-item stat-pass">
+                                <div class="stat-value">${summary.pass || 0}</div>
+                                <div class="stat-label">Compatible</div>
+                            </div>
+                            <div class="stat-item stat-warning">
+                                <div class="stat-value">${summary.warning || 0}</div>
+                                <div class="stat-label">Warnings</div>
+                            </div>
+                            <div class="stat-item stat-error">
+                                <div class="stat-value">${summary.error || 0}</div>
+                                <div class="stat-label">Blocking</div>
+                            </div>
+                        </div>
+                    </div>
+            `;
+
+            // Show blocking issues if any
+            if (blockingIssues.length > 0) {
+                html += `
+                    <div class="blocking-issues">
+                        <h5>🚨 Blocking Issues (Must Fix Before Upgrade)</h5>
+                        <div class="issues-list">
+                `;
+                blockingIssues.forEach(issue => {
+                    html += `
+                        <div class="issue-item">
+                            <strong>${issue.addon_name}</strong>: ${issue.issue}
+                            <div class="issue-action">${issue.action_required}</div>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Addon compatibility table
+            if (addonAnalysis.length > 0) {
+                html += `
+                    <div class="addon-table-container">
+                        <h5>📋 Addon Compatibility Details</h5>
+                        <table class="addon-compatibility-table">
+                            <thead>
+                                <tr>
+                                    <th>Addon Name</th>
+                                    <th>Current Version</th>
+                                    <th>Is Valid in Target EKS</th>
+                                    <th>Min Version for Target</th>
+                                    <th>Max Version for Target</th>
+                                    <th>Action Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                addonAnalysis.forEach(addon => {
+                    const targetReq = addon.target_requirements || {};
+                    const isValid = addon.status === 'pass';
+                    const statusClass = addon.status === 'pass' ? 'status-pass' : 
+                                       addon.status === 'warning' ? 'status-warning' : 
+                                       addon.status === 'error' ? 'status-error' : 'status-unknown';
+                    
+                    html += `
+                        <tr class="addon-row ${statusClass}">
+                            <td>
+                                <strong>${addon.addon_name}</strong>
+                                <div class="addon-type">${targetReq.addon_type || 'unknown'}</div>
+                            </td>
+                            <td class="version-cell">${addon.current_version || 'N/A'}</td>
+                            <td class="validation-cell">
+                                <span class="validation-badge ${isValid ? 'valid' : 'invalid'}">
+                                    ${isValid ? '✅ Valid' : '❌ Invalid'}
+                                </span>
+                            </td>
+                            <td class="version-cell">${targetReq.min_version || 'N/A'}</td>
+                            <td class="version-cell">${targetReq.max_version || 'N/A'}</td>
+                            <td class="action-cell">
+                                <div class="action-text">${addon.action_required || 'No action required'}</div>
+                                ${addon.message ? `<div class="addon-message">${addon.message}</div>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                html += '<div class="no-data">No addon analysis data available</div>';
+            }
 
             html += '</div>';
             return html;

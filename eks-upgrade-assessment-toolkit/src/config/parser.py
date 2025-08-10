@@ -48,6 +48,8 @@ class AssessmentOptions:
     run_kubent_scan: bool = True
     run_pluto_scan: bool = True
     check_deprecated_apis: bool = True
+    run_addon_compatibility_analysis: bool = True
+    collect_cluster_metadata: bool = True
 
 
 @dataclass
@@ -127,7 +129,9 @@ class ConfigParser:
                 run_cluster_insights=assessment_config.get('run_cluster_insights', True),
                 run_kubent_scan=assessment_config.get('run_kubent_scan', True),
                 run_pluto_scan=assessment_config.get('run_pluto_scan', True),
-                check_deprecated_apis=assessment_config.get('check_deprecated_apis', True)
+                check_deprecated_apis=assessment_config.get('check_deprecated_apis', True),
+                run_addon_compatibility_analysis=assessment_config.get('run_addon_compatibility_analysis', True),
+                collect_cluster_metadata=assessment_config.get('collect_cluster_metadata', True)
             )
         
         return config
@@ -181,7 +185,9 @@ class ConfigParser:
                 'run_cluster_insights': True,
                 'run_kubent_scan': True,
                 'run_pluto_scan': True,
-                'check_deprecated_apis': True
+                'check_deprecated_apis': True,
+                'run_addon_compatibility_analysis': True,
+                'collect_cluster_metadata': True
             }
         }
         

@@ -88,6 +88,85 @@ def install_tools():
 
 
 @cli.command()
+@click.option('--config', '-c', default='eks-upgrade-config.yaml', help='Configuration file path')
+@click.option('--region', '-r', help='AWS region (overrides config)')
+@click.option('--force-refresh', '-f', is_flag=True, help='Force refresh of addon data even if cached')
+def prepare(config: str, region: str, force_refresh: bool):
+    """Prepare common EKS addon version data for analysis."""
+    try:
+        click.echo("🔧 Preparing EKS addon version data...")
+        
+        # Load configuration to get region if not provided
+        if not region:
+            if not os.path.exists(config):
+                click.echo(f"❌ Configuration file not found: {config}", err=True)
+                click.echo("Run 'python main.py init' to create a sample configuration.")
+                sys.exit(1)
+            
+            upgrade_config = ConfigParser.load_config(config)
+            region = upgrade_config.aws_configuration.region
+        
+        click.echo(f"📍 Using AWS region: {region}")
+        
+        # Prepare addon version data in shared location
+        from addon_version_fetcher import EKSAddonVersionFetcher
+        
+        # Use a standard shared data location
+        shared_data_dir = Path("assessment-reports/shared-data")
+        shared_data_dir.mkdir(parents=True, exist_ok=True)
+        
+        fetcher = EKSAddonVersionFetcher(region=region)
+        
+        # Check if data exists and is recent (unless force refresh)
+        addon_versions_file = shared_data_dir / "eks-addon-versions.json"
+        
+        if addon_versions_file.exists() and not force_refresh:
+            click.echo("✅ EKS addon version data already exists")
+            click.echo(f"📁 Location: {addon_versions_file}")
+            click.echo("💡 Use --force-refresh to update the data")
+            
+            # Show data summary
+            try:
+                import json
+                with open(addon_versions_file, 'r') as f:
+                    data = json.load(f)
+                metadata = data.get('metadata', {})
+                click.echo(f"📊 Data summary:")
+                click.echo(f"   - EKS versions: {len(metadata.get('eks_versions', []))}")
+                click.echo(f"   - Total addons: {metadata.get('total_addons', 0)}")
+                click.echo(f"   - Region: {metadata.get('region', 'unknown')}")
+            except Exception:
+                pass
+        else:
+            # Fetch fresh data
+            click.echo("🔍 Fetching comprehensive EKS addon version compatibility data...")
+            addon_versions_data = fetcher.fetch_all_addon_versions()
+            
+            # Save to shared location
+            import json
+            with open(addon_versions_file, 'w') as f:
+                json.dump(addon_versions_data, f, indent=2, default=str)
+            
+            click.echo(f"✅ EKS addon version data prepared successfully!")
+            click.echo(f"📁 Saved to: {addon_versions_file}")
+            
+            metadata = addon_versions_data.get('metadata', {})
+            click.echo(f"📊 Data summary:")
+            click.echo(f"   - EKS versions: {len(metadata.get('eks_versions', []))}")
+            click.echo(f"   - Total addons: {metadata.get('total_addons', 0)}")
+            click.echo(f"   - Region: {metadata.get('region', 'unknown')}")
+        
+        click.echo("\n🎯 Next steps:")
+        click.echo("   1. Run 'python src/main.py analyze' to analyze clusters")
+        click.echo("   2. The analysis will use the prepared addon data automatically")
+        click.echo("   3. No need to fetch addon data during cluster analysis")
+        
+    except Exception as e:
+        click.echo(f"❌ Error preparing addon data: {str(e)}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
 @click.option('--config', '-c', default='eks-upgrade-config.yaml',
               help='Path to configuration file')
 @click.option('--output-dir', '-o', default='eks-upgrade-assessment',
@@ -162,7 +241,41 @@ def analyze(config: str, output_dir: str):
         # Initialize resource inventory generator
         inventory_generator = ResourceInventoryGenerator(aws_client)
         
-        # Analyze clusters with optimizations for large numbers
+        # Step 1: Load pre-prepared addon version data
+        click.echo("🔧 Loading pre-prepared EKS addon version data...")
+        
+        # Check for pre-prepared addon data in standard shared location
+        shared_addon_file = Path("assessment-reports/shared-data/eks-addon-versions.json")
+        
+        if shared_addon_file.exists():
+            try:
+                with open(shared_addon_file, 'r') as f:
+                    addon_versions_data = json.load(f)
+                click.echo("✅ Using pre-prepared EKS addon version data")
+                
+                # Show data summary
+                metadata = addon_versions_data.get('metadata', {})
+                click.echo(f"📊 Addon data summary: {len(metadata.get('eks_versions', []))} EKS versions, {metadata.get('total_addons', 0)} addons")
+            except Exception as e:
+                click.echo(f"⚠️  Warning: Could not load pre-prepared addon data: {e}")
+                addon_versions_data = None
+        else:
+            click.echo("⚠️  No pre-prepared addon data found")
+            click.echo("💡 Run 'python src/main.py prepare' first to prepare addon data")
+            click.echo("🔄 Falling back to on-demand addon data fetching...")
+            
+            # Fallback to on-demand fetching
+            from addon_version_fetcher import fetch_and_cache_addon_versions
+            addon_versions_file = fetch_and_cache_addon_versions(
+                region=upgrade_config.aws_configuration.region,
+                output_dir=output_dir,
+                force_refresh=False
+            )
+            
+            from addon_version_fetcher import EKSAddonVersionFetcher
+            addon_versions_data = EKSAddonVersionFetcher.load_addon_versions_data(output_dir)
+        
+        # Analyze clusters with pre-prepared addon data
         click.echo(f"📊 Analyzing {len(cluster_names)} clusters...")
         cluster_analysis = {}
         
@@ -250,6 +363,53 @@ def analyze(config: str, output_dir: str):
                 click.echo(f"    ❌ Error collecting cluster metadata: {str(e)}")
                 cluster_metadata = {}
             
+            # Run addon compatibility analysis for target version
+            addon_compatibility_results = {}
+            if upgrade_config.assessment_options.run_addon_compatibility_analysis and addon_versions_data:
+                try:
+                    from cluster_addon_analyzer import analyze_cluster_addons
+                    
+                    # Get current addons from cluster metadata or addons list
+                    current_addons = []
+                    if cluster_metadata and 'addons' in cluster_metadata:
+                        current_addons = cluster_metadata['addons']
+                    elif addons:
+                        current_addons = addons
+                    
+                    if current_addons:
+                        addon_compatibility_results = analyze_cluster_addons(
+                            cluster_name=cluster_name,
+                            current_eks_version=cluster_info.version,
+                            target_eks_version=upgrade_config.upgrade_targets.control_plane_target_version,
+                            current_addons=current_addons,
+                            addon_versions_data=addon_versions_data
+                        )
+                    else:
+                        addon_compatibility_results = {
+                            'status': 'no_addons', 
+                            'message': 'No addons found for analysis',
+                            'summary': {'total_addons': 0, 'pass': 0, 'error': 0, 'warning': 0, 'unknown': 0}
+                        }
+                except Exception as e:
+                    click.echo(f"    ⚠️  Warning: Addon compatibility analysis failed: {str(e)}")
+                    addon_compatibility_results = {
+                        'status': 'error', 
+                        'error': str(e),
+                        'summary': {'total_addons': 0, 'pass': 0, 'error': 0, 'warning': 0, 'unknown': 0}
+                    }
+            elif not upgrade_config.assessment_options.run_addon_compatibility_analysis:
+                addon_compatibility_results = {
+                    'status': 'disabled',
+                    'message': 'Addon compatibility analysis disabled in configuration',
+                    'summary': {'total_addons': 0, 'pass': 0, 'error': 0, 'warning': 0, 'unknown': 0}
+                }
+            else:
+                addon_compatibility_results = {
+                    'status': 'no_data',
+                    'message': 'Addon version data not available',
+                    'summary': {'total_addons': 0, 'pass': 0, 'error': 0, 'warning': 0, 'unknown': 0}
+                }
+            
             cluster_analysis[cluster_name] = {
                 'cluster_info': cluster_info,
                 'node_groups': node_groups,
@@ -260,7 +420,8 @@ def analyze(config: str, output_dir: str):
                 'addons': addons,
                 'fargate_profiles': fargate_profiles,
                 'resource_inventory': resource_inventory,
-                'cluster_metadata': cluster_metadata
+                'cluster_metadata': cluster_metadata,
+                'addon_compatibility': addon_compatibility_results
             }
             
             click.echo(f"    ✅ Analysis complete for {cluster_name}")
@@ -845,12 +1006,14 @@ For detailed upgrade guidance, refer to the AWS EKS documentation and best pract
 
 
 def generate_cluster_metadata_json(cluster_analysis: dict, output_dir: str):
-    """Generate comprehensive cluster metadata JSON file."""
+    """Generate comprehensive cluster metadata JSON file (without addon compatibility)."""
     try:
-        # Extract cluster metadata for JSON export
+        # Extract cluster metadata only (exclude addon compatibility)
         clusters_metadata = {}
         for cluster_name, analysis in cluster_analysis.items():
-            clusters_metadata[cluster_name] = analysis.get('cluster_metadata', {})
+            cluster_metadata = analysis.get('cluster_metadata', {})
+            # Explicitly exclude addon_compatibility from cluster metadata
+            clusters_metadata[cluster_name] = cluster_metadata
         
         # Save to assessment-reports directory
         metadata_file = Path(output_dir) / "assessment-reports" / "clusters-metadata.json"
@@ -975,11 +1138,11 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
                             'count': len(pluto_results.get('deprecated_apis', [])),
                             'apis': pluto_results.get('deprecated_apis', [])[:10]  # Limit for web UI
                         }
-                    }
-                }
-                # Removed cluster_metadata to avoid duplication with clusters-metadata.json
+                    },
+                    'addon_compatibility': analysis.get('addon_compatibility', {})
+                },
+                'cluster_metadata': cluster_metadata
             }
-        
         # Step 2: Save assessment data JSON for web UI
         assessment_data_file = web_ui_dir / "assessment-data.json"
         with open(assessment_data_file, 'w') as f:
@@ -1455,6 +1618,23 @@ def generate_documentation(config: EKSUpgradeConfig, cluster_analysis: dict, out
     generate_assessment_reports(config, cluster_analysis, output_dir)
     
     # Step 3: Generate cluster metadata JSON
+    # Step 2.5: Generate separate addon compatibility report
+    click.echo("📝 Generating addon compatibility report...")
+    addon_compatibility_report = {}
+    
+    for cluster_name, analysis in cluster_analysis.items():
+        addon_compatibility = analysis.get('addon_compatibility', {})
+        if addon_compatibility:
+            addon_compatibility_report[cluster_name] = addon_compatibility
+    
+    # Save addon compatibility to separate file
+    if addon_compatibility_report:
+        addon_compatibility_file = Path(output_dir) / "assessment-reports" / "addon-compatibility.json"
+        addon_compatibility_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(addon_compatibility_file, 'w') as f:
+            json.dump(addon_compatibility_report, f, indent=2, default=str)
+        click.echo(f"✅ Addon compatibility report saved to: {addon_compatibility_file}")
+    
     generate_cluster_metadata_json(cluster_analysis, output_dir)
     
     # Step 4: Generate assessment scripts
@@ -3076,7 +3256,8 @@ if __name__ == '__main__':
                             'count': len(pluto_results.get('deprecated_apis', [])),
                             'apis': pluto_results.get('deprecated_apis', [])[:10]  # Limit for web UI
                         }
-                    }
+                    },
+                    'addon_compatibility': analysis.get('addon_compatibility', {})
                 },
                 'cluster_metadata': {
                     'node_groups': len(cluster_metadata.get('node_groups', [])),
