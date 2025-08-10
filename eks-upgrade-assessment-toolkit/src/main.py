@@ -290,6 +290,49 @@ def analyze(config: str, output_dir: str):
         sys.exit(1)
 
 
+@cli.command()
+@click.option('--config', '-c', default='eks-upgrade-config.yaml',
+              help='Path to configuration file')
+def validate(config: str):
+    """Validate configuration file."""
+    try:
+        if not os.path.exists(config):
+            click.echo(f"❌ Configuration file not found: {config}", err=True)
+            sys.exit(1)
+        
+        upgrade_config = ConfigParser.load_config(config)
+        errors = ConfigParser.validate_config(upgrade_config)
+        
+        if errors:
+            click.echo("❌ Configuration validation failed:", err=True)
+            for error in errors:
+                click.echo(f"  - {error}", err=True)
+            sys.exit(1)
+        else:
+            click.echo("✅ Configuration is valid")
+            
+    except Exception as e:
+        click.echo(f"❌ Error validating configuration: {str(e)}", err=True)
+        sys.exit(1)
+
+
+def determine_insights_status(insights):
+    """Determine the overall status based on individual insight statuses."""
+    if not insights:
+        return 'no_data'
+    
+    # Check for ERROR status (highest priority)
+    if any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights):
+        return 'error'
+    
+    # Check for WARNING status (medium priority)
+    if any(insight.get('insightStatus', {}).get('status') == 'WARNING' for insight in insights):
+        return 'warning'
+    
+    # If all are PASSING or other non-critical statuses
+    return 'success'
+
+
 def configure_kubectl_for_cluster(cluster_name: str, region: str) -> Dict[str, Any]:
     """Automatically configure kubectl for the specified cluster."""
     result = {
@@ -915,9 +958,10 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
                 },
                 'assessment_results': {
                     'insights': {
-                        'status': 'success' if insights else 'no_data',
+                        'status': determine_insights_status(insights),
                         'count': len(insights),
                         'critical_issues': len([i for i in insights if i.get('insightStatus', {}).get('status') == 'ERROR']),
+                        'warning_issues': len([i for i in insights if i.get('insightStatus', {}).get('status') == 'WARNING']),
                         'findings': insights[:5]  # Limit for web UI
                     },
                     'deprecated_apis': {
@@ -1322,8 +1366,13 @@ def generate_assessment_reports(config: EKSUpgradeConfig, cluster_analysis: dict
         pluto_results = analysis.get('pluto_results', {})
         deprecated_api_results = analysis.get('deprecated_api_results', {})
         
-        # Determine overall status
-        insights_status = "✅ PASS" if not any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights) else "❌ ISSUES"
+        # Determine overall status with proper WARNING and ERROR handling
+        if any(insight.get('insightStatus', {}).get('status') == 'ERROR' for insight in insights):
+            insights_status = "❌ ISSUES"
+        elif any(insight.get('insightStatus', {}).get('status') == 'WARNING' for insight in insights):
+            insights_status = "⚠️ WARNING"
+        else:
+            insights_status = "✅ PASS"
         
         # Check if kubent found deprecated APIs (not just if the scan succeeded)
         if kubent_results.get('status') == 'success' and len(kubent_results.get('deprecated_apis', [])) > 0:
@@ -2767,44 +2816,6 @@ echo "4. Update monitoring and alerting configurations"
         os.chmod(scripts_dir / script_file, 0o755)
 
 
-@cli.command()
-@click.option('--config', '-c', default='eks-upgrade-config.yaml',
-              help='Path to configuration file')
-def validate(config: str):
-    """Validate configuration file."""
-    try:
-        if not os.path.exists(config):
-            click.echo(f"❌ Configuration file not found: {config}", err=True)
-            sys.exit(1)
-        
-        upgrade_config = ConfigParser.load_config(config)
-        errors = ConfigParser.validate_config(upgrade_config)
-        
-        if errors:
-            click.echo("❌ Configuration validation failed:", err=True)
-            for error in errors:
-                click.echo(f"  - {error}", err=True)
-            sys.exit(1)
-        else:
-            click.echo("✅ Configuration is valid")
-            
-            # Show configuration summary
-            click.echo("\nConfiguration Summary:")
-            click.echo(f"  Region: {upgrade_config.aws_configuration.region}")
-            click.echo(f"  Profile: {upgrade_config.aws_configuration.credentials_profile}")
-            click.echo(f"  Upgrade Strategy: {upgrade_config.upgrade_strategy.method}")
-            click.echo(f"  Target Version: {upgrade_config.upgrade_targets.control_plane_target_version}")
-            
-            if upgrade_config.cluster_info.cluster_names:
-                click.echo(f"  Clusters: {', '.join(upgrade_config.cluster_info.cluster_names)}")
-            else:
-                click.echo("  Clusters: Auto-discover all clusters in region")
-                
-    except Exception as e:
-        click.echo(f"❌ Error validating configuration: {str(e)}", err=True)
-        sys.exit(1)
-
-
 if __name__ == '__main__':
     cli()
     """Generate main assessment README file."""
@@ -3048,9 +3059,10 @@ if __name__ == '__main__':
                 },
                 'assessment_results': {
                     'insights': {
-                        'status': 'success' if insights else 'no_data',
+                        'status': determine_insights_status(insights),
                         'count': len(insights),
                         'critical_issues': len([i for i in insights if i.get('insightStatus', {}).get('status') == 'ERROR']),
+                        'warning_issues': len([i for i in insights if i.get('insightStatus', {}).get('status') == 'WARNING']),
                         'findings': insights[:5]  # Limit for web UI
                     },
                     'deprecated_apis': {
