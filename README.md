@@ -1,17 +1,18 @@
 # 🚀 EKS Upgrade Assessment Toolkit
 
+## ⚠️ **免责声明 / Disclaimer**
+
+**中文**: 本工具仅为提升工作效率而设计，虽已投入大量努力开发，但**不对最终结果承担任何责任**。用户在使用过程中遇到的任何问题均与工具提供方无关。请在充分理解风险的基础上使用，并以官方Kubernetes和Amazon EKS文档为准进行最终决策。
+
+**English**: This tool is designed solely to improve work efficiency. Despite significant development efforts, **we assume no responsibility for final results**. Any issues encountered during usage are not the responsibility of the tool provider. Please use at your own risk and rely on official Kubernetes and Amazon EKS documentation for final decisions.
+
+
+## Introduction
+
 A comprehensive toolkit to assess Amazon EKS cluster readiness for upgrades following AWS best practices. This toolkit provides automated analysis, interactive reports, and detailed addon compatibility checking to ensure smooth EKS upgrades.
 
 
 https://github.com/user-attachments/assets/78916f0f-043c-45fc-b4a7-b32183174ded
-
-
-
-## ⚠️ **Important Notice / 重要提示**
-
-**English**: This tool is a **demo** designed to help you collect cluster information and assess EKS upgrade readiness. It is **NOT intended for final decision-making** and you should **NOT depend entirely on this tool**. For any uncertainties or detailed guidance, please refer to the official Kubernetes and Amazon EKS documentation before proceeding with upgrades.
-
-**中文**: 此工具是一个**演示版本**，旨在帮助您收集集群信息并评估EKS升级准备情况。它**不适用于最终决策**，您**不应完全依赖此工具**。如有任何疑问或需要详细指导，请在进行升级前参考官方Kubernetes和Amazon EKS文档。
 
 ## 📋 **Table of Contents**
 - [Quick Start](#-quick-start)
