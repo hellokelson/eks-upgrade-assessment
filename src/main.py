@@ -555,7 +555,7 @@ def run_kubent_scan(cluster_name: str) -> Dict[str, Any]:
         
         # Run kubent scan with shorter timeout for multi-cluster scenarios
         # Disable helm3 and cluster collectors to speed up scanning
-        cmd = ['kubent', '--output', 'json', '--target-version', '1.30', '--cluster=false', '--helm3=false']
+        cmd = ['kubent', '--output', 'json', '--target-version', '1.33', '--cluster=false', '--helm3=false']
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         
         if result.returncode == 0:
@@ -642,7 +642,7 @@ def run_kubent_scan_fast(cluster_name: str, timeout: int = 5) -> Dict[str, Any]:
         cmd = [
             'kubent', 
             '--output', 'json', 
-            '--target-version', '1.30',
+            '--target-version', '1.33',
             '--cluster=false',  # Disable cluster-wide scanning
             '--helm3=false',    # Disable Helm scanning
             '--log-level', 'error'  # Reduce logging overhead

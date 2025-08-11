@@ -51,7 +51,7 @@ https://github.com/user-attachments/assets/78916f0f-043c-45fc-b4a7-b32183174ded
 ### **5-Minute Setup**
 ```bash
 # 1. Navigate to toolkit directory
-cd eks-upgrade-assessment-toolkit
+cd eks-upgrade-assessment
 
 # 2. Install dependencies
 pip install -r requirements.txt

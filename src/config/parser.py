@@ -160,36 +160,29 @@ class ConfigParser:
     @staticmethod
     def create_sample_config(output_path: str) -> None:
         """Create a sample configuration file."""
-        sample_config = {
-            'aws_configuration': {
-                'region': 'us-west-2',
-                'credentials_profile': 'default'
-            },
-            'cluster_info': {
-                'cluster_names': [],  # Empty list will discover all clusters
-                'current_control_plane_version': None,  # Will be auto-detected
-                'current_data_plane_version': None  # Will be auto-detected
-            },
-            'upgrade_targets': {
-                'control_plane_target_version': '1.28',
-                'data_plane_target_version': '1.28'
-            },
-            'upgrade_strategy': {
-                'method': 'both'  # Options: "in-place", "blue-green", or "both"
-            },
-            'resilience_requirements': {
-                'enable_resilience_hub': True,
-                'backup_strategy': 'velero'
-            },
-            'assessment_options': {
-                'run_cluster_insights': True,
-                'run_kubent_scan': True,
-                'run_pluto_scan': True,
-                'check_deprecated_apis': True,
-                'run_addon_compatibility_analysis': True,
-                'collect_cluster_metadata': True
-            }
-        }
+        # Create the configuration content as a string to match README format exactly
+        config_content = """# EKS Upgrade Assessment Configuration
+aws_configuration:
+  region: "us-east-1"
+  credentials_profile: "default"
+  
+cluster_info:
+  cluster_names: []  # If empty, will discover all EKS clusters in the region
+  # cluster_names: ["cluster-1", "cluster-2"]  # Or specify specific clusters
+  current_control_plane_version: null  # Optional: will be auto-detected if not specified
+  current_data_plane_version: null     # Optional: will be auto-detected if not specified
+  
+upgrade_targets:
+  control_plane_target_version: "1.33"
+  data_plane_target_version: "1.33"
+  
+assessment_options:
+  run_cluster_insights: true
+  run_kubent_scan: true
+  run_pluto_scan: true
+  check_deprecated_apis: true
+  collect_cluster_metadata: true
+"""
         
         with open(output_path, 'w') as file:
-            yaml.dump(sample_config, file, default_flow_style=False, indent=2)
+            file.write(config_content)
