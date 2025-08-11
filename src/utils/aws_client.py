@@ -196,6 +196,11 @@ class AWSClient:
     def get_cluster_insights(self, cluster_name: str) -> List[Dict[str, Any]]:
         """Get EKS cluster insights with detailed information for non-passing insights."""
         try:
+            # Check if the client has the list_insights method
+            if not hasattr(self.eks_client, 'list_insights'):
+                print(f"Warning: EKS Insights API not available in this AWS SDK version for cluster {cluster_name}")
+                return []
+            
             response = self.eks_client.list_insights(
                 clusterName=cluster_name
             )
@@ -223,13 +228,23 @@ class AWSClient:
                     except ClientError as e:
                         print(f"Failed to get detailed insight {insight.get('id', 'unknown')} for {cluster_name}: {str(e)}")
                         # Continue without detailed info if describe_insight fails
+                    except Exception as e:
+                        print(f"Warning: Could not retrieve insight details: {str(e)}")
+                        # Continue without detailed info
                 
                 enhanced_insights.append(insight)
             
             return enhanced_insights
             
         except ClientError as e:
-            print(f"Failed to get cluster insights for {cluster_name}: {str(e)}")
+            error_msg = str(e)
+            if 'list_insights' in error_msg or 'describe_insight' in error_msg:
+                print(f"Warning: EKS Insights API not available in region {self.eks_client.meta.region_name} for cluster {cluster_name}: {error_msg}")
+            else:
+                print(f"Failed to get cluster insights for {cluster_name}: {error_msg}")
+            return []
+        except Exception as e:
+            print(f"Warning: Could not retrieve cluster insights for {cluster_name}: {str(e)}")
             return []
     
     def get_insight_details(self, cluster_name: str, insight_id: str) -> Optional[Dict[str, Any]]:

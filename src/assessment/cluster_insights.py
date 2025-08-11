@@ -28,6 +28,15 @@ class ClusterInsightsAnalyzer:
             Dictionary containing cluster insights data
         """
         try:
+            # Check if the client has the list_insights method
+            if not hasattr(self.eks_client, 'list_insights'):
+                return {
+                    'cluster_name': cluster_name,
+                    'error': 'EKS Insights API not available in this AWS SDK version',
+                    'insights': [],
+                    'summary': {'total_insights': 0, 'categories': {}}
+                }
+            
             # Get cluster insights
             response = self.eks_client.list_insights(
                 clusterName=cluster_name
@@ -43,27 +52,36 @@ class ClusterInsightsAnalyzer:
             }
             
             for insight in response.get('insights', []):
-                insight_detail = self.eks_client.describe_insight(
-                    clusterName=cluster_name,
-                    id=insight['id']
-                )
-                
-                insights_data['insights'].append(insight_detail['insight'])
-                
-                # Update summary
-                category = insight_detail['insight'].get('category', 'Unknown')
-                insights_data['summary']['categories'][category] = \
-                    insights_data['summary']['categories'].get(category, 0) + 1
+                try:
+                    insight_detail = self.eks_client.describe_insight(
+                        clusterName=cluster_name,
+                        id=insight['id']
+                    )
+                    
+                    insights_data['insights'].append(insight_detail['insight'])
+                    
+                    # Update summary
+                    category = insight_detail['insight'].get('category', 'Unknown')
+                    insights_data['summary']['categories'][category] = \
+                        insights_data['summary']['categories'].get(category, 0) + 1
+                        
+                except Exception as e:
+                    print(f"Warning: Could not retrieve insight {insight.get('id', 'unknown')}: {str(e)}")
+                    continue
             
             insights_data['summary']['total_insights'] = len(insights_data['insights'])
             
             return insights_data
             
         except Exception as e:
-            print(f"Error retrieving cluster insights for {cluster_name}: {str(e)}")
+            error_msg = str(e)
+            if 'list_insights' in error_msg or 'describe_insight' in error_msg:
+                error_msg = f"EKS Insights API not available (region: {self.eks_client.meta.region_name}): {error_msg}"
+            
+            print(f"Warning: Could not retrieve cluster insights for {cluster_name}: {error_msg}")
             return {
                 'cluster_name': cluster_name,
-                'error': str(e),
+                'error': error_msg,
                 'insights': [],
                 'summary': {'total_insights': 0, 'categories': {}}
             }
