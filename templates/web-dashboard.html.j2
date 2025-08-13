@@ -1117,6 +1117,32 @@
             border: 1px solid #dee2e6;
         }
 
+        .config-example {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+
+        .config-example h6 {
+            margin-bottom: 0.5rem;
+            color: #0066cc;
+        }
+
+        .config-example pre {
+            background: #ffffff;
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .config-example code {
+            color: #333;
+        }
+
         .addon-row.status-pass {
             background: #f8fff9;
         }
@@ -2029,8 +2055,24 @@
                             <li>Analysis was run before IAM analysis feature was implemented</li>
                             <li>IAM analysis failed during assessment</li>
                             <li>Insufficient permissions to analyze IAM roles</li>
+                            <li><strong>IAM analysis is disabled in configuration</strong> (run_addon_iam_analysis: false)</li>
                         </ul>
-                        <p><strong>Recommendation:</strong> Re-run the assessment to generate IAM analysis data.</p>
+                        <p><strong>Recommendation:</strong> Re-run the assessment with IAM analysis enabled to generate IAM analysis data.</p>
+                    </div>
+                `;
+            } else if (addonIAMData.status === 'disabled') {
+                html += `
+                    <div class="no-data">
+                        <h5>🔧 Addon IAM Analysis Disabled</h5>
+                        <p>Addon IAM analysis is disabled in the configuration file.</p>
+                        <p><strong>To enable:</strong> Set <code>run_addon_iam_analysis: true</code> in the <code>assessment_options</code> section of your configuration file.</p>
+                        <div class="config-example">
+                            <h6>Configuration Example:</h6>
+                            <pre><code>assessment_options:
+  run_addon_compatibility_analysis: true
+  run_addon_iam_analysis: true  # Enable this option
+  run_cluster_insights: true</code></pre>
+                        </div>
                     </div>
                 `;
             } else {

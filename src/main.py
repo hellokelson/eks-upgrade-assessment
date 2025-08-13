@@ -428,39 +428,48 @@ def analyze(config: str, output_dir: str):
             
             # Run addon IAM role and policy analysis
             addon_iam_results = {}
-            try:
-                from addon_iam_analyzer import analyze_cluster_addon_iam_roles
-                
-                # Get current addons from cluster metadata or addons list
-                current_addons = []
-                if cluster_metadata and 'addons' in cluster_metadata:
-                    current_addons = cluster_metadata['addons']
-                elif addons:
-                    current_addons = addons
-                
-                if current_addons:
-                    addon_iam_results = analyze_cluster_addon_iam_roles(
-                        cluster_name=cluster_name,
-                        addons=current_addons,
-                        aws_client=aws_client,
-                        shared_data_dir=Path("assessment-reports/shared-data")
-                    )
-                else:
+            if upgrade_config.assessment_options.run_addon_iam_analysis:
+                try:
+                    from addon_iam_analyzer import analyze_cluster_addon_iam_roles
+                    
+                    # Get current addons from cluster metadata or addons list
+                    current_addons = []
+                    if cluster_metadata and 'addons' in cluster_metadata:
+                        current_addons = cluster_metadata['addons']
+                    elif addons:
+                        current_addons = addons
+                    
+                    if current_addons:
+                        addon_iam_results = analyze_cluster_addon_iam_roles(
+                            cluster_name=cluster_name,
+                            addons=current_addons,
+                            aws_client=aws_client,
+                            shared_data_dir=Path("assessment-reports/shared-data")
+                        )
+                    else:
+                        addon_iam_results = {
+                            'cluster_name': cluster_name,
+                            'addon_iam_analysis': [],
+                            'summary': {'total_addons': 0, 'pass': 0, 'warning': 0, 'error': 0, 'not_applicable': 0},
+                            'recommendations': ['No addons found for IAM analysis']
+                        }
+                        
+                except Exception as e:
+                    click.echo(f"    ⚠️  Warning: Addon IAM analysis failed: {str(e)}")
                     addon_iam_results = {
                         'cluster_name': cluster_name,
                         'addon_iam_analysis': [],
                         'summary': {'total_addons': 0, 'pass': 0, 'warning': 0, 'error': 0, 'not_applicable': 0},
-                        'recommendations': ['No addons found for IAM analysis']
+                        'recommendations': [f'IAM analysis failed: {str(e)}'],
+                        'error': str(e)
                     }
-                    
-            except Exception as e:
-                click.echo(f"    ⚠️  Warning: Addon IAM analysis failed: {str(e)}")
+            elif not upgrade_config.assessment_options.run_addon_iam_analysis:
                 addon_iam_results = {
                     'cluster_name': cluster_name,
                     'addon_iam_analysis': [],
                     'summary': {'total_addons': 0, 'pass': 0, 'warning': 0, 'error': 0, 'not_applicable': 0},
-                    'recommendations': [f'IAM analysis failed: {str(e)}'],
-                    'error': str(e)
+                    'recommendations': ['Addon IAM analysis disabled in configuration'],
+                    'status': 'disabled'
                 }
             
             cluster_analysis[cluster_name] = {
