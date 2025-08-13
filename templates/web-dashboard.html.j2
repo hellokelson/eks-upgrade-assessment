@@ -863,6 +863,260 @@
             font-size: 0.85rem;
         }
 
+        /* IAM Analysis Styles */
+        .addon-iam-section {
+            padding: 1rem;
+        }
+
+        .iam-summary {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .summary-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .stat-item.pass {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+
+        .stat-item.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+
+        .stat-item.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+        .stat-item.not-applicable {
+            background: #e2e3e5;
+            border: 1px solid #d6d8db;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .iam-critical-issues, .iam-warnings {
+            margin: 1rem 0;
+        }
+
+        .iam-critical-issues .issue-item {
+            border: 1px solid #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .iam-warnings .issue-item {
+            border: 1px solid #ffc107;
+            background-color: #fffbf0;
+        }
+
+        .addon-iam-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .addon-iam-table th {
+            background: #f8f9fa;
+            padding: 1rem 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+        }
+
+        .addon-iam-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        .role-cell {
+            max-width: 200px;
+        }
+
+        .role-name {
+            font-weight: 500;
+            color: #0066cc;
+        }
+
+        .role-arn-small {
+            font-size: 0.8rem;
+            color: #6c757d;
+            word-break: break-all;
+        }
+
+        .policy-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 0.1rem;
+        }
+
+        .policy-badge.aws-managed {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .policy-badge.custom {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .expected-policy {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0.2rem 0;
+        }
+
+        .validation-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .validation-badge.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .validation-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .validation-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .validation-badge.not_applicable {
+            background: #e2e3e5;
+            color: #6c757d;
+        }
+
+        .policy-info {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .policy-item {
+            margin: 0.2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .policy-item.aws-managed {
+            color: #155724;
+        }
+
+        .policy-item.custom {
+            color: #856404;
+        }
+
+        .cluster-recommendations {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+
+        .recommendations-list {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .recommendations-list li {
+            margin: 0.5rem 0;
+            color: #0066cc;
+        }
+
+        .table-description {
+            margin-bottom: 1rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .addon-status {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .addon-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .addon-status.degraded {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .addon-status.unknown {
+            background: #e2e3e5;
+            color: #6c757d;
+        }
+
+        .iam-required {
+            font-weight: 500;
+        }
+
+        .iam-required.yes {
+            color: #dc3545;
+        }
+
+        .iam-required.no {
+            color: #28a745;
+        }
+
+        .iam-required.unknown {
+            color: #6c757d;
+        }
+
+        .no-role, .no-policies {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .validation-badge.unknown {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+
         .addon-row.status-pass {
             background: #f8fff9;
         }
@@ -1225,6 +1479,9 @@
                     <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'addon-upgrade')">
                         🔧 Addon Compatibility
                     </button>
+                    <button class="tab-button" onclick="showTab('${cluster.cluster_name}', 'addon-iam')">
+                        🔐 Addon IAM Analysis
+                    </button>
                 </div>
 
                 <div id="tab-${cluster.cluster_name}-eks-insights" class="tab-content">
@@ -1237,6 +1494,10 @@
 
                 <div id="tab-${cluster.cluster_name}-addon-upgrade" class="tab-content">
                     ${generateAddonUpgradeTab(cluster.cluster_name)}
+                </div>
+
+                <div id="tab-${cluster.cluster_name}-addon-iam" class="tab-content">
+                    ${generateAddonIAMTab(cluster.cluster_name)}
                 </div>
             `;
         }
@@ -1728,6 +1989,257 @@
                 `;
             } else {
                 html += '<div class="no-data">No addon analysis data available</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function generateAddonIAMTab(clusterName) {
+            // Load addon IAM analysis data
+            let addonIAMData = null;
+            
+            // Try to get addon IAM data from the assessment results
+            const assessmentCluster = assessmentData[clusterName];
+            if (assessmentCluster && assessmentCluster.assessment_results && assessmentCluster.assessment_results.addon_iam_analysis) {
+                addonIAMData = assessmentCluster.assessment_results.addon_iam_analysis;
+            }
+            
+            // Get cluster metadata to show all addons
+            const clusterMetadata = assessmentCluster?.cluster_metadata;
+            const installedAddons = clusterMetadata?.addons || [];
+            
+            let html = `
+                <div class="addon-iam-section">
+                    <h4>🔐 Addon IAM Role and Policy Analysis</h4>
+                    <div class="iam-info">
+                        <div class="summary-info">
+                            <p>This analysis verifies whether EKS addons are using AWS managed IAM policies or custom policies that require manual verification.</p>
+                            <p><strong>Key:</strong> ✅ Pass = Using AWS managed policies | ⚠️ Warning = Custom policies need verification | ❌ Error = Missing required policies | ℹ️ N/A = No IAM required</p>
+                        </div>
+                    </div>
+            `;
+            
+            if (!addonIAMData) {
+                html += `
+                    <div class="no-data">
+                        <h5>⚠️ No IAM Analysis Data Available</h5>
+                        <p>IAM analysis data is not available for this cluster. This could be due to:</p>
+                        <ul>
+                            <li>Analysis was run before IAM analysis feature was implemented</li>
+                            <li>IAM analysis failed during assessment</li>
+                            <li>Insufficient permissions to analyze IAM roles</li>
+                        </ul>
+                        <p><strong>Recommendation:</strong> Re-run the assessment to generate IAM analysis data.</p>
+                    </div>
+                `;
+            } else {
+                const addonAnalysis = addonIAMData.addon_iam_analysis || [];
+                const summary = addonIAMData.summary || {};
+                const recommendations = addonIAMData.recommendations || [];
+                
+                // Summary statistics
+                html += `
+                    <div class="iam-summary">
+                        <h5>📊 IAM Analysis Summary</h5>
+                        <div class="summary-stats">
+                            <div class="stat-item pass">
+                                <span class="stat-number">${summary.pass || 0}</span>
+                                <span class="stat-label">Using AWS Managed Policies</span>
+                            </div>
+                            <div class="stat-item warning">
+                                <span class="stat-number">${summary.warning || 0}</span>
+                                <span class="stat-label">Need Verification</span>
+                            </div>
+                            <div class="stat-item error">
+                                <span class="stat-number">${summary.error || 0}</span>
+                                <span class="stat-label">Configuration Errors</span>
+                            </div>
+                            <div class="stat-item not-applicable">
+                                <span class="stat-number">${summary.not_applicable || 0}</span>
+                                <span class="stat-label">No IAM Required</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Show critical issues if any
+                const errorAddons = addonAnalysis.filter(addon => addon.validation_status === 'error');
+                if (errorAddons.length > 0) {
+                    html += `
+                        <div class="iam-critical-issues">
+                            <h5>🚨 Critical IAM Issues (Must Fix Before Upgrade)</h5>
+                            <div class="issues-list">
+                    `;
+                    errorAddons.forEach(addon => {
+                        html += `
+                            <div class="issue-item error">
+                                <div class="issue-header">
+                                    <strong>${addon.addon_name}</strong>
+                                </div>
+                                <div class="issue-details">
+                                    ${addon.issues.map(issue => `<div class="issue-text">❌ ${issue}</div>`).join('')}
+                                    ${addon.recommendations.map(rec => `<div class="recommendation-text">💡 ${rec}</div>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Show warnings if any
+                const warningAddons = addonAnalysis.filter(addon => addon.validation_status === 'warning');
+                if (warningAddons.length > 0) {
+                    html += `
+                        <div class="iam-warnings">
+                            <h5>⚠️ IAM Configuration Warnings (Verify Manually)</h5>
+                            <div class="warnings-list">
+                    `;
+                    warningAddons.forEach(addon => {
+                        html += `
+                            <div class="issue-item warning">
+                                <div class="issue-header">
+                                    <strong>${addon.addon_name}</strong>
+                                    ${addon.service_account_role_arn ? 
+                                        `<div class="role-arn">Role: ${addon.service_account_role_arn}</div>` : 
+                                        ''
+                                    }
+                                </div>
+                                <div class="issue-details">
+                                    ${addon.issues.map(issue => `<div class="issue-text">⚠️ ${issue}</div>`).join('')}
+                                    ${addon.recommendations.map(rec => `<div class="recommendation-text">💡 ${rec}</div>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Comprehensive addon table - show ALL installed addons
+            if (installedAddons.length > 0) {
+                html += `
+                    <div class="iam-table-container">
+                        <h5>📋 Complete Addon IAM Analysis</h5>
+                        <p class="table-description">All addons installed in this cluster and their IAM policy status:</p>
+                        <table class="addon-iam-table">
+                            <thead>
+                                <tr>
+                                    <th>Addon Name</th>
+                                    <th>Version</th>
+                                    <th>Status</th>
+                                    <th>IAM Required</th>
+                                    <th>IAM Role</th>
+                                    <th>Policy Status</th>
+                                    <th>Validation Result</th>
+                                    <th>Action Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                installedAddons.forEach(installedAddon => {
+                    // Find corresponding IAM analysis
+                    const iamAnalysis = addonIAMData ? 
+                        addonIAMData.addon_iam_analysis?.find(a => a.addon_name === installedAddon.name) : 
+                        null;
+                    
+                    const statusClass = iamAnalysis ? 
+                        (iamAnalysis.validation_status === 'pass' ? 'status-pass' : 
+                         iamAnalysis.validation_status === 'warning' ? 'status-warning' : 
+                         iamAnalysis.validation_status === 'error' ? 'status-error' : 'status-not-applicable') :
+                        'status-unknown';
+                    
+                    const statusIcon = iamAnalysis ? 
+                        (iamAnalysis.validation_status === 'pass' ? '✅' : 
+                         iamAnalysis.validation_status === 'warning' ? '⚠️' : 
+                         iamAnalysis.validation_status === 'error' ? '❌' : 'ℹ️') :
+                        '❓';
+                    
+                    const iamRequired = iamAnalysis ? 
+                        (iamAnalysis.expected_managed_policies?.length > 0 ? 'Yes' : 'No') :
+                        'Unknown';
+                    
+                    html += `
+                        <tr class="iam-row ${statusClass}">
+                            <td>
+                                <strong>${installedAddon.name}</strong>
+                            </td>
+                            <td class="version-cell">${installedAddon.version || 'N/A'}</td>
+                            <td class="status-cell">
+                                <span class="addon-status ${installedAddon.status?.toLowerCase() || 'unknown'}">
+                                    ${installedAddon.status || 'Unknown'}
+                                </span>
+                            </td>
+                            <td class="iam-required-cell">
+                                <span class="iam-required ${iamRequired.toLowerCase()}">
+                                    ${iamRequired}
+                                </span>
+                            </td>
+                            <td class="role-cell">
+                                ${iamAnalysis?.service_account_role_arn ? 
+                                    `<div class="role-name">${iamAnalysis.service_account_role_arn.split('/').pop()}</div>
+                                     <div class="role-arn-small">${iamAnalysis.service_account_role_arn}</div>` : 
+                                    '<span class="no-role">No IAM Role</span>'
+                                }
+                            </td>
+                            <td class="policy-status-cell">
+                                ${iamAnalysis?.iam_role_info?.attached_policies ? 
+                                    iamAnalysis.iam_role_info.attached_policies.map(policy => 
+                                        `<div class="policy-badge ${policy.is_aws_managed ? 'aws-managed' : 'custom'}">
+                                            ${policy.is_aws_managed ? '🔒 AWS Managed' : '⚙️ Custom'}
+                                        </div>`
+                                    ).join('') : 
+                                    '<span class="no-policies">N/A</span>'
+                                }
+                            </td>
+                            <td class="validation-cell">
+                                <span class="validation-badge ${iamAnalysis?.validation_status || 'unknown'}">
+                                    ${statusIcon} ${iamAnalysis?.validation_status ? 
+                                        iamAnalysis.validation_status.replace('_', ' ').toUpperCase() : 
+                                        'NOT ANALYZED'
+                                    }
+                                </span>
+                            </td>
+                            <td class="action-cell">
+                                ${iamAnalysis?.issues?.length > 0 ? 
+                                    iamAnalysis.issues.map(issue => `<div class="issue-text">${issue}</div>`).join('') : 
+                                    (iamAnalysis ? 'No action required' : 'Run IAM analysis')
+                                }
+                                ${iamAnalysis?.recommendations?.length > 0 ? 
+                                    iamAnalysis.recommendations.map(rec => `<div class="recommendation-text">${rec}</div>`).join('') : 
+                                    ''
+                                }
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                html += '<div class="no-data">No addons found in this cluster</div>';
+            }
+            
+            // Cluster-level recommendations
+            if (addonIAMData?.recommendations?.length > 0) {
+                html += `
+                    <div class="cluster-recommendations">
+                        <h5>💡 Cluster-Level Recommendations</h5>
+                        <ul class="recommendations-list">
+                            ${addonIAMData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
             }
 
             html += '</div>';

@@ -156,6 +156,22 @@ def prepare(config: str, region: str, force_refresh: bool):
             click.echo(f"   - Total addons: {metadata.get('total_addons', 0)}")
             click.echo(f"   - Region: {metadata.get('region', 'unknown')}")
         
+        # Generate EKS addon IAM policy mapping
+        click.echo("🔐 Generating EKS addon IAM policy mapping...")
+        from eks_addon_iam_policies import save_addon_iam_mapping
+        
+        iam_mapping_file = save_addon_iam_mapping(Path("assessment-reports"))
+        click.echo(f"✅ EKS addon IAM policy mapping saved to: {iam_mapping_file}")
+        
+        # Show IAM mapping summary
+        from eks_addon_iam_policies import load_addon_iam_mapping
+        iam_data = load_addon_iam_mapping(Path("assessment-reports/shared-data"))
+        iam_summary = iam_data.get('summary', {})
+        click.echo(f"📊 IAM mapping summary:")
+        click.echo(f"   - Total addons: {iam_summary.get('total_addons', 0)}")
+        click.echo(f"   - Require IAM: {iam_summary.get('require_iam', 0)}")
+        click.echo(f"   - No IAM required: {iam_summary.get('no_iam_required', 0)}")
+        
         click.echo("\n🎯 Next steps:")
         click.echo("   1. Run 'python src/main.py analyze' to analyze clusters")
         click.echo("   2. The analysis will use the prepared addon data automatically")
@@ -410,6 +426,43 @@ def analyze(config: str, output_dir: str):
                     'summary': {'total_addons': 0, 'pass': 0, 'error': 0, 'warning': 0, 'unknown': 0}
                 }
             
+            # Run addon IAM role and policy analysis
+            addon_iam_results = {}
+            try:
+                from addon_iam_analyzer import analyze_cluster_addon_iam_roles
+                
+                # Get current addons from cluster metadata or addons list
+                current_addons = []
+                if cluster_metadata and 'addons' in cluster_metadata:
+                    current_addons = cluster_metadata['addons']
+                elif addons:
+                    current_addons = addons
+                
+                if current_addons:
+                    addon_iam_results = analyze_cluster_addon_iam_roles(
+                        cluster_name=cluster_name,
+                        addons=current_addons,
+                        aws_client=aws_client,
+                        shared_data_dir=Path("assessment-reports/shared-data")
+                    )
+                else:
+                    addon_iam_results = {
+                        'cluster_name': cluster_name,
+                        'addon_iam_analysis': [],
+                        'summary': {'total_addons': 0, 'pass': 0, 'warning': 0, 'error': 0, 'not_applicable': 0},
+                        'recommendations': ['No addons found for IAM analysis']
+                    }
+                    
+            except Exception as e:
+                click.echo(f"    ⚠️  Warning: Addon IAM analysis failed: {str(e)}")
+                addon_iam_results = {
+                    'cluster_name': cluster_name,
+                    'addon_iam_analysis': [],
+                    'summary': {'total_addons': 0, 'pass': 0, 'warning': 0, 'error': 0, 'not_applicable': 0},
+                    'recommendations': [f'IAM analysis failed: {str(e)}'],
+                    'error': str(e)
+                }
+            
             cluster_analysis[cluster_name] = {
                 'cluster_info': cluster_info,
                 'node_groups': node_groups,
@@ -421,7 +474,8 @@ def analyze(config: str, output_dir: str):
                 'fargate_profiles': fargate_profiles,
                 'resource_inventory': resource_inventory,
                 'cluster_metadata': cluster_metadata,
-                'addon_compatibility': addon_compatibility_results
+                'addon_compatibility': addon_compatibility_results,
+                'addon_iam_analysis': addon_iam_results
             }
             
             click.echo(f"    ✅ Analysis complete for {cluster_name}")
@@ -1139,7 +1193,8 @@ def generate_web_ui_from_reports(cluster_analysis: dict, output_dir: str):
                             'apis': pluto_results.get('deprecated_apis', [])[:10]  # Limit for web UI
                         }
                     },
-                    'addon_compatibility': analysis.get('addon_compatibility', {})
+                    'addon_compatibility': analysis.get('addon_compatibility', {}),
+                    'addon_iam_analysis': analysis.get('addon_iam_analysis', {})
                 },
                 'cluster_metadata': cluster_metadata
             }
@@ -1634,6 +1689,23 @@ def generate_documentation(config: EKSUpgradeConfig, cluster_analysis: dict, out
         with open(addon_compatibility_file, 'w') as f:
             json.dump(addon_compatibility_report, f, indent=2, default=str)
         click.echo(f"✅ Addon compatibility report saved to: {addon_compatibility_file}")
+    
+    # Step 2.6: Generate separate addon IAM analysis report
+    click.echo("📝 Generating addon IAM analysis report...")
+    addon_iam_report = {}
+    
+    for cluster_name, analysis in cluster_analysis.items():
+        addon_iam_analysis = analysis.get('addon_iam_analysis', {})
+        if addon_iam_analysis:
+            addon_iam_report[cluster_name] = addon_iam_analysis
+    
+    # Save addon IAM analysis to separate file
+    if addon_iam_report:
+        addon_iam_file = Path(output_dir) / "assessment-reports" / "addon-iam-analysis.json"
+        addon_iam_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(addon_iam_file, 'w') as f:
+            json.dump(addon_iam_report, f, indent=2, default=str)
+        click.echo(f"✅ Addon IAM analysis report saved to: {addon_iam_file}")
     
     generate_cluster_metadata_json(cluster_analysis, output_dir)
     
@@ -3257,7 +3329,8 @@ if __name__ == '__main__':
                             'apis': pluto_results.get('deprecated_apis', [])[:10]  # Limit for web UI
                         }
                     },
-                    'addon_compatibility': analysis.get('addon_compatibility', {})
+                    'addon_compatibility': analysis.get('addon_compatibility', {}),
+                    'addon_iam_analysis': analysis.get('addon_iam_analysis', {})
                 },
                 'cluster_metadata': {
                     'node_groups': len(cluster_metadata.get('node_groups', [])),
