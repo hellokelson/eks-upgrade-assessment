@@ -81,6 +81,14 @@ open assessment-reports/*/web-ui/index.html
 - **Upgrade Instructions**: Specific actions required for each addon
 - **Blocking Issue Detection**: Identifies must-fix issues before EKS upgrade
 
+### **🔐 Comprehensive Addon IAM Analysis** ⭐ **NEW!**
+- **Dedicated Web Tab**: "Addon IAM Analysis" tab under "Upgrade Assessment"
+- **Complete Addon Inventory**: Shows ALL installed addons and their IAM status
+- **AWS Managed Policy Validation**: Verifies addons use recommended managed policies
+- **Custom Policy Detection**: Identifies custom policies that need manual verification
+- **IAM Configuration Guidance**: Provides specific recommendations for IAM issues
+- **Configurable Analysis**: Can be enabled/disabled via `run_addon_iam_analysis` setting
+
 ### **⚡ Optimized Two-Step Workflow** ⭐ **NEW!**
 1. **Prepare**: Fetch common addon data once (2-3 minutes)
 2. **Analyze**: Analyze clusters multiple times (30 seconds each)
@@ -159,6 +167,8 @@ assessment_options:
   run_kubent_scan: true
   run_pluto_scan: true
   check_deprecated_apis: true
+  run_addon_compatibility_analysis: true
+  run_addon_iam_analysis: true
   collect_cluster_metadata: true
 ```
 
@@ -184,6 +194,44 @@ upgrade_targets:
 aws_configuration:
   region: "us-west-2"
   credentials_profile: "west-profile"
+```
+
+**Assessment Options Configuration**
+```yaml
+assessment_options:
+  run_cluster_insights: true                    # AWS EKS Insights analysis
+  run_kubent_scan: true                         # Deprecated API scanning with kubent
+  run_pluto_scan: true                          # Deprecated API scanning with pluto
+  check_deprecated_apis: true                   # Combined deprecated API analysis
+  run_addon_compatibility_analysis: true       # 🆕 Addon version compatibility analysis
+  run_addon_iam_analysis: true                 # 🆕 Addon IAM policy validation
+  collect_cluster_metadata: true               # Comprehensive cluster metadata collection
+```
+
+**Selective Analysis (Performance Optimization)**
+```yaml
+# For quick compatibility check only
+assessment_options:
+  run_cluster_insights: false
+  run_kubent_scan: false
+  run_pluto_scan: false
+  check_deprecated_apis: false
+  run_addon_compatibility_analysis: true       # Focus on addon compatibility
+  run_addon_iam_analysis: true                 # Focus on IAM validation
+  collect_cluster_metadata: true
+```
+
+**Minimal Analysis (Fastest)**
+```yaml
+# For basic cluster information only
+assessment_options:
+  run_cluster_insights: false
+  run_kubent_scan: false
+  run_pluto_scan: false
+  check_deprecated_apis: false
+  run_addon_compatibility_analysis: false
+  run_addon_iam_analysis: false
+  collect_cluster_metadata: true               # Always recommended
 ```
 
 ## 📖 **Usage**
@@ -277,17 +325,20 @@ The **Addon Compatibility** tab is your most critical resource. It shows:
 2. **EKS Insights**: AWS recommendations and best practices
 3. **API Deprecation**: Deprecated APIs that need attention
 4. **🔧 Addon Compatibility**: **Most important** - addon upgrade requirements
-5. **Cluster Details**: Complete cluster configuration
+5. **🔐 Addon IAM Analysis**: **NEW!** - addon IAM policy validation and recommendations
+6. **Cluster Details**: Complete cluster configuration
 
 ## 📁 **Output Structure**
 
 ```
 assessment-reports/
 ├── shared-data/                                    # Common data (reused)
-│   └── eks-addon-versions.json (385KB)           # All addon version data
+│   ├── eks-addon-versions.json (385KB)           # All addon version data
+│   └── eks-addon-iam-policies.json (15KB)        # 🆕 Addon IAM policy mapping
 ├── {account-id}-{region}-{timestamp}-assessment/  # Your assessment
 │   ├── assessment-reports/
 │   │   ├── addon-compatibility.json (16KB)       # 🎯 MOST IMPORTANT
+│   │   ├── addon-iam-analysis.json (12KB)        # 🆕 Addon IAM analysis results
 │   │   └── clusters-metadata.json (4KB)          # Cluster details
 │   ├── web-ui/
 │   │   ├── index.html                            # 📊 Interactive dashboard
@@ -321,9 +372,38 @@ assessment-reports/
 }
 ```
 
+**🔐 addon-iam-analysis.json** - IAM Policy Validation
+```json
+{
+  "cluster-name": {
+    "cluster_name": "cluster-name",
+    "addon_iam_analysis": [
+      {
+        "addon_name": "vpc-cni",
+        "service_account_role_arn": "arn:aws:iam::123456789012:role/vpc-cni-role",
+        "validation_status": "pass",
+        "expected_managed_policies": [
+          "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        ],
+        "issues": [],
+        "recommendations": []
+      }
+    ],
+    "summary": {
+      "total_addons": 4,
+      "pass": 1,
+      "warning": 0,
+      "error": 0,
+      "not_applicable": 3
+    }
+  }
+}
+```
+
 **📊 Web Dashboard (index.html)**
 - Interactive interface with all assessment results
 - Focus on the "🔧 Addon Compatibility" tab
+- **NEW**: "🔐 Addon IAM Analysis" tab for IAM policy validation
 - Mobile-friendly responsive design
 
 ## 🚀 **Advanced Usage**
@@ -507,6 +587,9 @@ Teams using this toolkit typically see:
 
 ### **🔄 Recent Updates**
 - ✅ Added dedicated addon compatibility tab
+- ✅ Added comprehensive addon IAM analysis with dedicated web tab
+- ✅ Implemented configurable assessment options (run_addon_compatibility_analysis, run_addon_iam_analysis)
+- ✅ Enhanced VPC-CNI IAM policy validation and AWS managed policy detection
 - ✅ Implemented optimized prepare → analyze workflow
 - ✅ Enhanced data organization and separation
 - ✅ Improved error handling and user feedback
@@ -537,9 +620,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 2. **Configure**: Edit `eks-upgrade-config.yaml` for your environment  
 3. **Prepare**: Run `python src/main.py prepare` to fetch addon data
 4. **Analyze**: Run `python src/main.py analyze` to assess your clusters
-5. **Review**: Open the web dashboard and focus on the **🔧 Addon Compatibility** tab
+5. **Review**: Open the web dashboard and focus on the **🔧 Addon Compatibility** and **🔐 Addon IAM Analysis** tabs
 
-**The addon compatibility analysis will show you exactly what needs to be upgraded before your EKS upgrade!** 🚀
+**The addon compatibility analysis will show you exactly what needs to be upgraded before your EKS upgrade, and the IAM analysis will ensure your addons have proper IAM policies configured!** 🚀
   # cluster_names: ["cluster-1", "cluster-2"]  # Or specify clusters
   current_control_plane_version: null  # Auto-detected if null
   current_data_plane_version: null     # Auto-detected if null
@@ -553,6 +636,8 @@ assessment_options:
   run_kubent_scan: true
   run_pluto_scan: true
   check_deprecated_apis: true
+  run_addon_compatibility_analysis: true
+  run_addon_iam_analysis: true
   collect_cluster_metadata: true
 ```
 
@@ -779,6 +864,8 @@ assessment_options:
   run_kubent_scan: true
   run_pluto_scan: true
   check_deprecated_apis: true
+  run_addon_compatibility_analysis: true
+  run_addon_iam_analysis: true
   collect_cluster_metadata: true
 ```
 
