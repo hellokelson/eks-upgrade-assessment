@@ -669,6 +669,7 @@ assessment-reports/
 ### **Interactive Reports**
 - ✅ **Web Dashboard**: Modern HTML interface with tabbed navigation
 - ✅ **Addon Compatibility Tab**: Detailed table showing upgrade requirements
+- ✅ **NodeGroups Table**: Enhanced with managed type and IAM role columns (with copy-to-clipboard)
 - ✅ **Visual Indicators**: Color-coded status badges and progress indicators
 - ✅ **Responsive Design**: Works on desktop and mobile devices
 
