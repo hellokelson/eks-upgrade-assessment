@@ -264,6 +264,11 @@
             color: #155724;
         }
 
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
         .status-warning {
             background: #fff3cd;
             color: #856404;
@@ -272,6 +277,98 @@
         .status-error {
             background: #f8d7da;
             color: #721c24;
+        }
+
+        /* IAM Role Display Styles */
+        .iam-role-cell {
+            max-width: 200px;
+            min-width: 150px;
+        }
+
+        .iam-role-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f8f9fa;
+            padding: 0.375rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .iam-role-display:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .iam-role-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            color: #495057;
+            font-weight: 500;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            background: #dee2e6;
+            color: #495057;
+        }
+
+        .copy-btn:active {
+            background: #ced4da;
+            transform: scale(0.95);
+        }
+
+        .copy-btn.copied {
+            color: #28a745;
+            background: #d4edda;
+        }
+
+        .copy-btn.copied svg {
+            stroke: #28a745;
+        }
+
+        /* Tooltip for copy feedback */
+        .copy-feedback {
+            position: absolute;
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            top: -2rem;
+            right: 0;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        .copy-feedback::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            right: 0.5rem;
+            border: 4px solid transparent;
+            border-top-color: #28a745;
         }
 
         .expand-icon {
@@ -1540,6 +1637,8 @@
                             <th>Name</th>
                             <th>Status</th>
                             <th>Version</th>
+                            <th>Managed</th>
+                            <th>IAM Role</th>
                             <th>Capacity Type</th>
                             <th>Instance Types</th>
                             <th>AMI Type</th>
@@ -1550,6 +1649,33 @@
 
             nodeGroups.forEach(ng => {
                 const instanceTypes = ng.instance_types ? ng.instance_types.join(', ') : 'N/A';
+                
+                // Determine if it's managed (all node groups from EKS API are managed)
+                const isManaged = ng.is_managed !== false; // Default to true if not specified
+                const managedStatus = isManaged ? 
+                    '<span class="status-badge status-success">✅ Managed</span>' : 
+                    '<span class="status-badge status-warning">⚠️ Self-managed</span>';
+                
+                // Format IAM role - simplified display with copy functionality
+                let iamRoleDisplay = 'N/A';
+                if (ng.node_role) {
+                    // Extract role name from ARN for display
+                    const roleMatch = ng.node_role.match(/role\/([^\/]+)$/);
+                    const roleName = roleMatch ? roleMatch[1] : ng.node_role;
+                    
+                    iamRoleDisplay = `
+                        <div class="iam-role-display" title="Click copy button to copy full ARN">
+                            <span class="iam-role-name">${roleName}</span>
+                            <button class="copy-btn" onclick="copyToClipboard('${ng.node_role}', this)" title="Copy full ARN to clipboard">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                }
+                
                 html += `
                     <tr>
                         <td><strong>${ng.name}</strong></td>
@@ -1559,6 +1685,8 @@
                             </span>
                         </td>
                         <td>${ng.version || 'N/A'}</td>
+                        <td>${managedStatus}</td>
+                        <td class="iam-role-cell">${iamRoleDisplay}</td>
                         <td>${ng.capacity_type || 'N/A'}</td>
                         <td>${instanceTypes}</td>
                         <td>${ng.ami_type || 'N/A'}</td>
@@ -2334,6 +2462,80 @@
 
             // Add active class to clicked button
             event.target.classList.add('active');
+        }
+
+        function copyToClipboard(text, buttonElement) {
+            // Use the modern Clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopyFeedback(buttonElement, 'Copied!');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopyTextToClipboard(text, buttonElement);
+                });
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                fallbackCopyTextToClipboard(text, buttonElement);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, buttonElement) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyFeedback(buttonElement, 'Copied!');
+                } else {
+                    showCopyFeedback(buttonElement, 'Copy failed');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showCopyFeedback(buttonElement, 'Copy failed');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function showCopyFeedback(buttonElement, message) {
+            // Add copied class to button for visual feedback
+            buttonElement.classList.add('copied');
+            
+            // Create and show feedback tooltip
+            const feedback = document.createElement('div');
+            feedback.className = 'copy-feedback show';
+            feedback.textContent = message;
+            
+            // Position relative to button
+            const container = buttonElement.closest('.iam-role-display');
+            if (container) {
+                container.style.position = 'relative';
+                container.appendChild(feedback);
+                
+                // Remove feedback after 2 seconds
+                setTimeout(() => {
+                    buttonElement.classList.remove('copied');
+                    if (feedback.parentNode) {
+                        feedback.parentNode.removeChild(feedback);
+                    }
+                }, 2000);
+            } else {
+                // Fallback: just remove the copied class
+                setTimeout(() => {
+                    buttonElement.classList.remove('copied');
+                }, 2000);
+            }
         }
 
         function getStatusClass(status) {

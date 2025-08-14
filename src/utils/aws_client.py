@@ -398,7 +398,9 @@ class AWSClient:
                         'version': ng.version,
                         'capacity_type': ng.capacity_type,
                         'instance_types': ng.instance_types,
-                        'ami_type': ng.ami_type
+                        'ami_type': ng.ami_type,
+                        'node_role': ng.node_role,
+                        'is_managed': True  # All node groups retrieved via EKS API are managed
                     })
                     
                     # Save original node group data
