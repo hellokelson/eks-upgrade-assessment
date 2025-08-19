@@ -38,6 +38,9 @@ class NodeGroupInfo:
     scaling_config: Dict[str, Any]
     version: str
     release_version: str
+    is_managed: bool = True  # True for EKS managed, False for self-managed
+    asg_name: Optional[str] = None  # Auto Scaling Group name for self-managed
+    nodegroup_type: Optional[str] = None  # Type from tags (managed/unmanaged)
 
 
 class AWSClient:
@@ -53,6 +56,7 @@ class AWSClient:
         self._iam_client = None
         self._logs_client = None
         self._sts_client = None
+        self._autoscaling_client = None
         
     @property
     def session(self) -> boto3.Session:
@@ -98,6 +102,13 @@ class AWSClient:
         if self._sts_client is None:
             self._sts_client = self.session.client('sts')
         return self._sts_client
+    
+    @property
+    def autoscaling_client(self):
+        """Get Auto Scaling client."""
+        if self._autoscaling_client is None:
+            self._autoscaling_client = self.session.client('autoscaling')
+        return self._autoscaling_client
     
     def test_connection(self) -> bool:
         """Test AWS connection and permissions."""
@@ -151,25 +162,32 @@ class AWSClient:
             return None
     
     def get_node_groups(self, cluster_name: str) -> List[NodeGroupInfo]:
-        """Get node groups for a cluster."""
+        """Get all node groups for a cluster (both managed and self-managed)."""
+        all_node_groups = []
+        
+        # Get EKS managed node groups
         try:
-            # List node groups
             response = self.eks_client.list_nodegroups(clusterName=cluster_name)
             nodegroup_names = response.get('nodegroups', [])
             
-            node_groups = []
             for ng_name in nodegroup_names:
                 ng_info = self.get_node_group_info(cluster_name, ng_name)
                 if ng_info:
-                    node_groups.append(ng_info)
-            
-            return node_groups
+                    all_node_groups.append(ng_info)
         except ClientError as e:
-            print(f"Failed to get node groups for {cluster_name}: {str(e)}")
-            return []
+            print(f"Failed to get managed node groups for {cluster_name}: {str(e)}")
+        
+        # Get self-managed node groups from Auto Scaling Groups
+        try:
+            self_managed_groups = self.get_self_managed_node_groups(cluster_name)
+            all_node_groups.extend(self_managed_groups)
+        except Exception as e:
+            print(f"Failed to get self-managed node groups for {cluster_name}: {str(e)}")
+        
+        return all_node_groups
     
     def get_node_group_info(self, cluster_name: str, nodegroup_name: str) -> Optional[NodeGroupInfo]:
-        """Get detailed information about a node group."""
+        """Get detailed information about a managed node group."""
         try:
             response = self.eks_client.describe_nodegroup(
                 clusterName=cluster_name,
@@ -187,11 +205,121 @@ class AWSClient:
                 node_role=ng_data.get('nodeRole', ''),
                 scaling_config=ng_data.get('scalingConfig', {}),
                 version=ng_data.get('version', ''),
-                release_version=ng_data.get('releaseVersion', '')
+                release_version=ng_data.get('releaseVersion', ''),
+                is_managed=True,  # EKS managed node group
+                asg_name=None,  # Managed node groups don't expose ASG name
+                nodegroup_type='managed'
             )
         except ClientError as e:
             print(f"Failed to get node group info for {nodegroup_name}: {str(e)}")
             return None
+    
+    def get_self_managed_node_groups(self, cluster_name: str) -> List[NodeGroupInfo]:
+        """Get self-managed node groups for a cluster by checking Auto Scaling Groups."""
+        try:
+            self_managed_groups = []
+            
+            # Get all Auto Scaling Groups
+            paginator = self.autoscaling_client.get_paginator('describe_auto_scaling_groups')
+            
+            for page in paginator.paginate():
+                for asg in page['AutoScalingGroups']:
+                    asg_name = asg['AutoScalingGroupName']
+                    tags = {tag['Key']: tag['Value'] for tag in asg.get('Tags', [])}
+                    
+                    # Check if this ASG belongs to our cluster
+                    cluster_tag = tags.get('alpha.eksctl.io/cluster-name')
+                    nodegroup_type = tags.get('alpha.eksctl.io/nodegroup-type')
+                    
+                    if cluster_tag == cluster_name:
+                        # This is a self-managed node group for our cluster
+                        
+                        # Get nodegroup name from tags or ASG name
+                        nodegroup_name = tags.get('alpha.eksctl.io/nodegroup-name', asg_name)
+                        
+                        # Determine instance types from ASG configuration
+                        instance_types = []
+                        if asg.get('MixedInstancesPolicy'):
+                            # Mixed instances policy
+                            overrides = asg['MixedInstancesPolicy'].get('LaunchTemplate', {}).get('Overrides', [])
+                            instance_types = [override.get('InstanceType') for override in overrides if override.get('InstanceType')]
+                        elif asg.get('LaunchTemplate'):
+                            # Single launch template - need to get instance type from launch template
+                            lt_id = asg['LaunchTemplate'].get('LaunchTemplateId')
+                            lt_name = asg['LaunchTemplate'].get('LaunchTemplateName')
+                            if lt_id or lt_name:
+                                try:
+                                    if lt_id:
+                                        lt_response = self.ec2_client.describe_launch_templates(LaunchTemplateIds=[lt_id])
+                                    else:
+                                        lt_response = self.ec2_client.describe_launch_templates(LaunchTemplateNames=[lt_name])
+                                    
+                                    if lt_response['LaunchTemplates']:
+                                        lt_version_response = self.ec2_client.describe_launch_template_versions(
+                                            LaunchTemplateId=lt_response['LaunchTemplates'][0]['LaunchTemplateId'],
+                                            Versions=['$Latest']
+                                        )
+                                        if lt_version_response['LaunchTemplateVersions']:
+                                            lt_data = lt_version_response['LaunchTemplateVersions'][0]['LaunchTemplateData']
+                                            if 'InstanceType' in lt_data:
+                                                instance_types = [lt_data['InstanceType']]
+                                except Exception as e:
+                                    print(f"Warning: Could not get launch template details for {asg_name}: {e}")
+                        elif asg.get('LaunchConfigurationName'):
+                            # Legacy launch configuration
+                            try:
+                                lc_response = self.autoscaling_client.describe_launch_configurations(
+                                    LaunchConfigurationNames=[asg['LaunchConfigurationName']]
+                                )
+                                if lc_response['LaunchConfigurations']:
+                                    instance_types = [lc_response['LaunchConfigurations'][0]['InstanceType']]
+                            except Exception as e:
+                                print(f"Warning: Could not get launch configuration details for {asg_name}: {e}")
+                        
+                        # Determine capacity type from tags or instance types
+                        capacity_type = "ON_DEMAND"  # Default
+                        if any("spot" in inst_type.lower() for inst_type in instance_types):
+                            capacity_type = "SPOT"
+                        
+                        # Get IAM role from tags or instances
+                        node_role = tags.get('alpha.eksctl.io/instance-role-arn', '')
+                        
+                        # Create scaling config from ASG settings
+                        scaling_config = {
+                            'minSize': asg.get('MinSize', 0),
+                            'maxSize': asg.get('MaxSize', 0),
+                            'desiredSize': asg.get('DesiredCapacity', 0)
+                        }
+                        
+                        # Determine status based on ASG health
+                        status = "ACTIVE"
+                        if asg.get('DesiredCapacity', 0) == 0:
+                            status = "INACTIVE"
+                        
+                        # Get Kubernetes version from tags or instances
+                        version = tags.get('alpha.eksctl.io/kubernetes-version', 'Unknown')
+                        
+                        self_managed_groups.append(NodeGroupInfo(
+                            cluster_name=cluster_name,
+                            nodegroup_name=nodegroup_name,
+                            status=status,
+                            capacity_type=capacity_type,
+                            instance_types=instance_types,
+                            ami_type=tags.get('alpha.eksctl.io/ami-type', 'AL2_x86_64'),
+                            node_role=node_role,
+                            scaling_config=scaling_config,
+                            version=version,
+                            release_version='',
+                            is_managed=False,  # This is self-managed
+                            asg_name=asg_name,
+                            nodegroup_type=nodegroup_type or 'unmanaged'
+                        ))
+            
+            return self_managed_groups
+            
+        except ClientError as e:
+            print(f"Failed to get self-managed node groups for {cluster_name}: {str(e)}")
+            return []
     
     def get_cluster_insights(self, cluster_name: str) -> List[Dict[str, Any]]:
         """Get EKS cluster insights with detailed information for non-passing insights."""
@@ -400,7 +528,10 @@ class AWSClient:
                         'instance_types': ng.instance_types,
                         'ami_type': ng.ami_type,
                         'node_role': ng.node_role,
-                        'is_managed': True  # All node groups retrieved via EKS API are managed
+                        'is_managed': ng.is_managed,  # True for managed, False for self-managed
+                        'nodegroup_type': ng.nodegroup_type,  # 'managed' or 'unmanaged'
+                        'asg_name': ng.asg_name,  # ASG name for self-managed groups
+                        'scaling_config': ng.scaling_config
                     })
                     
                     # Save original node group data

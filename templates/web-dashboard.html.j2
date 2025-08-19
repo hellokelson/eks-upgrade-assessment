@@ -338,6 +338,47 @@
             background: #d4edda;
         }
 
+        /* Node Groups Summary Styles */
+        .nodegroups-summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0073bb;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .stat-item strong {
+            color: #495057;
+        }
+
+        /* ASG Name Styles */
+        .asg-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #495057;
+        }
+
+        .text-muted {
+            color: #6c757d;
+            font-style: italic;
+        }
+
         .copy-btn.copied svg {
             stroke: #28a745;
         }
@@ -1627,21 +1668,39 @@
 
         function generateNodeGroupsTable(nodeGroups) {
             if (!nodeGroups || nodeGroups.length === 0) {
-                return '<div class="no-data">No managed node groups found</div>';
+                return '<div class="no-data">No node groups found</div>';
             }
 
+            // Separate managed and self-managed node groups
+            const managedGroups = nodeGroups.filter(ng => ng.is_managed !== false);
+            const selfManagedGroups = nodeGroups.filter(ng => ng.is_managed === false);
+
             let html = `
+                <div class="nodegroups-summary">
+                    <div class="summary-stats">
+                        <span class="stat-item">
+                            <strong>Total:</strong> ${nodeGroups.length}
+                        </span>
+                        <span class="stat-item">
+                            <strong>Managed:</strong> ${managedGroups.length}
+                        </span>
+                        <span class="stat-item">
+                            <strong>Self-managed:</strong> ${selfManagedGroups.length}
+                        </span>
+                    </div>
+                </div>
                 <table class="detail-table">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Status</th>
                             <th>Version</th>
-                            <th>Managed</th>
+                            <th>Management Type</th>
                             <th>IAM Role</th>
                             <th>Capacity Type</th>
                             <th>Instance Types</th>
                             <th>AMI Type</th>
+                            <th>ASG Name</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1650,11 +1709,15 @@
             nodeGroups.forEach(ng => {
                 const instanceTypes = ng.instance_types ? ng.instance_types.join(', ') : 'N/A';
                 
-                // Determine if it's managed (all node groups from EKS API are managed)
+                // Determine management type and display
                 const isManaged = ng.is_managed !== false; // Default to true if not specified
-                const managedStatus = isManaged ? 
-                    '<span class="status-badge status-success">✅ Managed</span>' : 
-                    '<span class="status-badge status-warning">⚠️ Self-managed</span>';
+                let managedStatus;
+                if (isManaged) {
+                    managedStatus = '<span class="status-badge status-success">✅ EKS Managed</span>';
+                } else {
+                    const nodeGroupType = ng.nodegroup_type || 'unmanaged';
+                    managedStatus = `<span class="status-badge status-warning">⚠️ Self-managed (${nodeGroupType})</span>`;
+                }
                 
                 // Format IAM role - simplified display with copy functionality
                 let iamRoleDisplay = 'N/A';
@@ -1675,6 +1738,11 @@
                         </div>
                     `;
                 }
+
+                // ASG name display (only for self-managed)
+                const asgDisplay = ng.asg_name ? 
+                    `<span class="asg-name" title="Auto Scaling Group">${ng.asg_name}</span>` : 
+                    '<span class="text-muted">N/A</span>';
                 
                 html += `
                     <tr>
@@ -1690,6 +1758,7 @@
                         <td>${ng.capacity_type || 'N/A'}</td>
                         <td>${instanceTypes}</td>
                         <td>${ng.ami_type || 'N/A'}</td>
+                        <td>${asgDisplay}</td>
                     </tr>
                 `;
             });

@@ -53,22 +53,27 @@ https://github.com/user-attachments/assets/78916f0f-043c-45fc-b4a7-b32183174ded
 # 1. Navigate to toolkit directory
 cd eks-upgrade-assessment
 
-# 2. Install dependencies
+# 2. Activate virtual environment (if exists) or create one
+source venv/bin/activate
+# OR create new virtual environment if needed:
+# python3 -m venv venv && source venv/bin/activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 3. Install assessment tools
+# 4. Install assessment tools
 python src/main.py install-tools
 
-# 4. Create configuration
+# 5. Create configuration
 python src/main.py init
 
-# 5. Prepare addon data (one-time)
+# 6. Prepare addon data (one-time)
 python src/main.py prepare
 
-# 6. Run assessment
+# 7. Run assessment
 python src/main.py analyze
 
-# 7. Open results
+# 8. Open results
 open assessment-reports/*/web-ui/index.html
 ```
 
@@ -93,6 +98,14 @@ open assessment-reports/*/web-ui/index.html
 1. **Prepare**: Fetch common addon data once (2-3 minutes)
 2. **Analyze**: Analyze clusters multiple times (30 seconds each)
 
+### **🖥️ Complete Node Group Analysis** ⭐ **NEW!**
+- **Managed Node Groups**: Full EKS managed node group analysis
+- **Self-Managed Node Groups**: Auto-discovery via Auto Scaling Group tags
+- **Tag-Based Detection**: Identifies self-managed groups using `alpha.eksctl.io/cluster-name` tags
+- **Management Type Display**: Clear distinction between managed and self-managed
+- **ASG Integration**: Shows Auto Scaling Group names for self-managed groups
+- **Comprehensive Metadata**: Instance types, IAM roles, scaling configuration
+
 ### **📊 Comprehensive Assessment**
 - **Automated Discovery**: Finds all EKS clusters in your region
 - **Addon Analysis**: Checks compatibility with target EKS version
@@ -110,6 +123,11 @@ open assessment-reports/*/web-ui/index.html
 
 ### **Method 1: Quick Install**
 ```bash
+# Activate virtual environment (if exists) or create one
+source venv/bin/activate
+# OR create new virtual environment if needed:
+# python3 -m venv venv && source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -483,7 +501,8 @@ export AWS_DEFAULT_REGION=us-east-1
 Required AWS permissions:
 - `eks:ListClusters`, `eks:DescribeCluster`
 - `eks:ListAddons`, `eks:DescribeAddon`
-- `ec2:DescribeInstances`
+- `autoscaling:DescribeAutoScalingGroups`
+- `ec2:DescribeInstances`, `ec2:DescribeLaunchTemplates`
 - `sts:GetCallerIdentity`
 
 ### **Validation Steps**
@@ -776,7 +795,16 @@ For issues and questions:
 ### Manual Installation
 
 1. Clone or download the toolkit
-2. Install Python dependencies:
+2. Create and activate virtual environment:
+   ```bash
+   # If venv directory exists, activate it:
+   source venv/bin/activate
+   
+   # OR create new virtual environment:
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -984,9 +1012,13 @@ The toolkit requires the following AWS permissions:
                 "eks:DescribeAddon",
                 "eks:ListInsights",
                 "eks:DescribeInsight",
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeLaunchConfigurations",
                 "ec2:DescribeVpcs",
                 "ec2:DescribeSubnets",
                 "ec2:DescribeSecurityGroups",
+                "ec2:DescribeLaunchTemplates",
+                "ec2:DescribeLaunchTemplateVersions",
                 "elbv2:DescribeLoadBalancers",
                 "elbv2:DescribeTargetGroups",
                 "logs:DescribeLogGroups",

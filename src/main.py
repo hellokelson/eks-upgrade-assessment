@@ -898,7 +898,7 @@ def check_deprecated_apis(aws_client: AWSClient, cluster_name: str) -> Dict[str,
                 logGroupName=f'/aws/eks/{cluster_name}/cluster',
                 startTime=int(start_time.timestamp()),
                 endTime=int(end_time.timestamp()),
-                queryString='fields @message | filter `annotations.k8s.io/deprecated`="true"'
+                queryString='fields @message | filter \\`annotations.k8s.io/deprecated\\`="true"'
             )
             
             query_id = query_response['queryId']
@@ -2879,10 +2879,10 @@ for CLUSTER in "${{CLUSTERS[@]}}"; do
     echo "Inventorying resources for cluster: $CLUSTER"
     
     echo "  📊 Load Balancers..."
-    aws elbv2 describe-load-balancers --region $REGION --query "LoadBalancers[?contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`owned\`) || contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`shared\`)]" --output table
+    aws elbv2 describe-load-balancers --region $REGION --query "LoadBalancers[?contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`owned\\`) || contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`shared\\`)]" --output table
     
     echo "  🎯 Target Groups..."
-    aws elbv2 describe-target-groups --region $REGION --query "TargetGroups[?contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`owned\`) || contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`shared\`)]" --output table
+    aws elbv2 describe-target-groups --region $REGION --query "TargetGroups[?contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`owned\\`) || contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`shared\\`)]" --output table
     
     echo "  💾 EBS Volumes (requires kubectl)..."
     if command -v kubectl &> /dev/null; then
@@ -2893,7 +2893,7 @@ for CLUSTER in "${{CLUSTERS[@]}}"; do
     fi
     
     echo "  📁 EFS File Systems..."
-    aws efs describe-file-systems --region $REGION --query "FileSystems[?contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`owned\`) || contains(Tags[?Key==\`kubernetes.io/cluster/$CLUSTER\`], \`shared\`)]" --output table
+    aws efs describe-file-systems --region $REGION --query "FileSystems[?contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`owned\\`) || contains(Tags[?Key==\\`kubernetes.io/cluster/$CLUSTER\\`], \\`shared\\`)]" --output table
     
     echo "  📊 CloudWatch Log Groups..."
     aws logs describe-log-groups --region $REGION --log-group-name-prefix "/aws/eks/$CLUSTER" --output table
@@ -2941,7 +2941,7 @@ for CLUSTER in "${{CLUSTERS[@]}}"; do
         --log-group-name /aws/eks/$CLUSTER/cluster \\
         --start-time $(date -u --date="-30 minutes" "+%s") \\
         --end-time $(date "+%s") \\
-        --query-string 'fields @message | filter `annotations.k8s.io/deprecated`="true"' \\
+        --query-string 'fields @message | filter \\`annotations.k8s.io/deprecated\\`="true"' \\
         --query queryId --output text 2>/dev/null || echo "")
     
     if [ ! -z "$QUERY_ID" ]; then
